@@ -1,191 +1,186 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Papel & Fantasia — histórias para levar" },
-      {
-        name: "description",
-        content: "Entre na Papel & Fantasia. Uma livraria de quadrinhos para quem ainda acredita em outras realidades.",
-      },
+      { title: "Bicho. — cuidado de outro mundo" },
+      { name: "description", content: "Banho, tosa e cuidado veterinário com muito carinho. Conheça a Bicho." },
     ],
   }),
   component: Index,
 });
 
-const chapters = ["A loja", "As histórias", "O próximo capítulo"];
+const navItems: [string, string, string][] = [
+  ["01", "Banho & tosa", "#banho"],
+  ["02", "Clínica", "#clinica"],
+  ["03", "Nossa história", "#historia"],
+  ["04", "Nossa turma", "#parceiros"],
+  ["05", "Contato", "#contato"],
+];
 
 function Index() {
-  const story = useRef<HTMLElement>(null);
-  const [active, setActive] = useState(0);
+  const site = useRef<HTMLElement>(null);
+  const years = useRef<HTMLSpanElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
 
   useEffect(() => {
-    const section = story.current;
-    if (!section) return;
-    let targetProgress = 0;
-    let currentProgress = 0;
+    const root = site.current;
+    if (!root) return;
+    const elements = Array.from(root.querySelectorAll<HTMLElement>("[data-scroll]"));
+    const stagger = new Map<HTMLElement, number>();
+    for (const element of elements) {
+      const group = element.closest("[data-scroll-group]") as HTMLElement | null;
+      const siblings = !group || group === element ? [element] : Array.from(group.querySelectorAll<HTMLElement>("[data-scroll]"));
+      stagger.set(element, siblings.indexOf(element));
+    }
+
     let frame = 0;
-    let lastTime = 0;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const viewport = window.innerHeight;
+        for (const element of elements) {
+          const bounds = element.getBoundingClientRect();
+          const index = stagger.get(element) ?? 0;
+          const start = viewport * 0.9 - index * 3;
+          const end = viewport * 0.43 - index * 3;
+          const reveal = Math.min(1, Math.max(0, (start - bounds.top) / Math.max(1, start - end)));
+          const depth = Number(element.dataset.depth ?? 0.08);
+          const center = bounds.top + bounds.height / 2;
+          const parallax = (viewport * 0.54 - center) * depth;
+          element.style.setProperty("--reveal-opacity", String(reveal));
+          element.style.setProperty("--reveal-y", `${(1 - reveal) * 66}px`);
+          element.style.setProperty("--reveal-scale", String(0.9 + reveal * 0.1));
+          element.style.setProperty("--parallax-y", `${parallax}px`);
+        }
 
-    const readScroll = (immediate = false) => {
-      const bounds = section.getBoundingClientRect();
-      const range = Math.max(1, section.offsetHeight - window.innerHeight);
-      targetProgress = Math.min(1, Math.max(0, -bounds.top / range));
-      if (immediate) {
-        currentProgress = targetProgress;
-        animate(0);
-        return;
-      }
-      if (!frame) frame = requestAnimationFrame(animate);
-    };
-
-    const animate = (time: number) => {
-      const elapsed = lastTime ? Math.min(64, time - lastTime) : 16;
-      lastTime = time;
-      const easing = reduceMotion.matches ? 1 : 1 - Math.exp(-elapsed / 105);
-      currentProgress += (targetProgress - currentProgress) * easing;
-      if (Math.abs(targetProgress - currentProgress) < 0.00008) currentProgress = targetProgress;
-
-      section.style.setProperty("--story-progress", String(currentProgress));
-      section.querySelectorAll<HTMLElement>(".chapter").forEach((chapter, index) => {
-        const sceneProgress = Math.min(1, Math.max(0, currentProgress * (chapters.length - 1) - index));
-        chapter.style.setProperty("--scene-progress", String(sceneProgress));
-        chapter.querySelectorAll<HTMLElement>("[data-reveal]").forEach((element, elementIndex) => {
-          const layerDepth = 12 + (elementIndex % 5) * 11;
-          const verticalDrift = Math.sin(sceneProgress * Math.PI) * (5 + (elementIndex % 3) * 6);
-          element.style.setProperty("--scroll-x", `${sceneProgress * layerDepth}px`);
-          element.style.setProperty("--scroll-y", `${verticalDrift}px`);
-        });
+        const maximum = Math.max(1, document.documentElement.scrollHeight - viewport);
+        root.style.setProperty("--page-progress", String(Math.min(1, window.scrollY / maximum)));
+        const history = root.querySelector<HTMLElement>("#historia");
+        if (history && years.current) {
+          const rect = history.getBoundingClientRect();
+          const progress = Math.min(1, Math.max(0, (viewport * 0.85 - rect.top) / (rect.height * 0.72)));
+          years.current.textContent = String(Math.round(progress * 15)).padStart(2, "0");
+        }
       });
-      const nextActive = Math.min(chapters.length - 1, Math.round(currentProgress * (chapters.length - 1)));
-      setActive((previous) => previous === nextActive ? previous : nextActive);
-
-      if (currentProgress !== targetProgress) frame = requestAnimationFrame(animate);
-      else { frame = 0; lastTime = 0; }
     };
 
-    readScroll(true);
-    window.addEventListener("scroll", readScroll, { passive: true });
-    window.addEventListener("resize", readScroll);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", readScroll);
-      window.removeEventListener("resize", readScroll);
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
     };
   }, []);
 
-  useEffect(() => {
-    const allElements = story.current?.querySelectorAll<HTMLElement>("[data-reveal]");
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      allElements?.forEach((element, index) => {
-        element.dataset.revealed = "true";
-        element.style.setProperty("--reveal-order", String(index));
-      });
-      story.current?.querySelectorAll<HTMLElement>(".chapter").forEach((chapter) => { chapter.dataset.prepared = "true"; });
-      return;
-    }
-    const chapter = story.current?.querySelectorAll<HTMLElement>(".chapter")[active];
-    const elements = Array.from(chapter?.querySelectorAll<HTMLElement>("[data-reveal]") ?? []);
-    if (active === 0) {
-      const cue = story.current?.parentElement?.querySelector<HTMLElement>(".scroll-cue[data-reveal]");
-      if (cue) elements.push(cue);
-    }
-    if (!chapter || !elements.length) return;
-
-    elements.forEach((element, index) => {
-      element.dataset.revealed = "true";
-      element.style.setProperty("--reveal-order", String(index));
-    });
-    chapter.dataset.prepared = "true";
-  }, [active]);
-
-  const moveLight = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const bounds = event.currentTarget.getBoundingClientRect();
-    event.currentTarget.style.setProperty("--pointer-x", `${event.clientX - bounds.left}px`);
-    event.currentTarget.style.setProperty("--pointer-y", `${event.clientY - bounds.top}px`);
+  const followCursor = (event: ReactPointerEvent<HTMLElement>) => {
+    event.currentTarget.style.setProperty("--cursor-x", `${event.clientX}px`);
+    event.currentTarget.style.setProperty("--cursor-y", `${event.clientY}px`);
   };
 
-  const goToChapter = (index: number) => {
+  const goTo = (id: string) => {
     setMenuOpen(false);
-    const section = story.current;
-    if (!section) return;
-    const bounds = section.getBoundingClientRect();
-    const top = window.scrollY + bounds.top + (section.offsetHeight - window.innerHeight) * index / (chapters.length - 1);
-    window.scrollTo({ top, behavior: "smooth" });
+    document.querySelector(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const subscribe = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubscribed(true);
   };
 
   return (
-    <main>
-      <section className="story" ref={story} aria-label="Uma viagem pela Papel & Fantasia">
-        <div className="story__stage">
-          <div className="scroll-meter" aria-hidden="true"><i /></div>
-          <div className="story__track">
-                <article className={`chapter chapter--shop${active === 0 ? " is-active" : ""}`} aria-label="A loja">
-              <div className="chapter__art art-shop" onPointerMove={moveLight}>
-                <div className="sun-disc" data-reveal />
-                <div className="shop-sign" data-reveal><span>PF</span><b>PAPEL &<br />FANTASIA</b><small>QUADRINHOS · SÃO PAULO</small></div>
-                <div className="window-grid" data-reveal><i data-reveal /><i data-reveal /><i data-reveal /><i data-reveal /><i data-reveal /><i data-reveal /></div>
-                <div className="shelf shelf--back" data-reveal><Cover color="coral" title="ÓRBITA" /><Cover color="lime" title="MATA" /><Cover color="blue" title="MIRAGEM" /></div>
-                <div className="shelf shelf--front" data-reveal><Cover color="blue" title="O OUTRO LADO" /><Cover color="yellow" title="SOL DE INVERNO" /><Cover color="coral" title="BICHO-LUZ" /><Cover color="violet" title="MARÉ ALTA" /></div>
-                <div className="counter" data-reveal />
-                <div className="plant" data-reveal><i data-reveal /><i data-reveal /><i data-reveal /><i data-reveal /><b data-reveal /></div>
-                <div className="art-caption" data-reveal><span data-reveal>01 / 03</span><span data-reveal>RUA DAS IDEIAS, 42 — DESDE 1998</span></div>
-              </div>
-              <SidePanel index={0} active={active} menuOpen={menuOpen} setMenuOpen={setMenuOpen} goToChapter={goToChapter} />
-            </article>
-
-            <article className={`chapter chapter--stories${active === 1 ? " is-active" : ""}`} aria-label="As histórias">
-              <div className="chapter__art art-stories" onPointerMove={moveLight}>
-                <div className="story-orbit orbit-one" data-reveal /><div className="story-orbit orbit-two" data-reveal />
-                <div className="cover-stack" data-reveal><Cover color="blue" title="O OUTRO LADO" large /><Cover color="coral" title="BICHO-LUZ" large /><Cover color="yellow" title="SOL DE INVERNO" large /></div>
-                <div className="burst burst--one" data-reveal>NOVO<br />MUNDO</div>
-                <div className="burst burst--two" data-reveal>EDIÇÃO<br />INDEPENDENTE</div>
-                <span className="art-stories__note" data-reveal>FEITO POR QUEM<br />TAMBÉM LÊ.</span>
-                <div className="art-caption" data-reveal><span data-reveal>02 / 03</span><span data-reveal>PEQUENAS TIRAGENS. GRANDES VIAGENS.</span></div>
-              </div>
-              <SidePanel index={1} active={active} menuOpen={menuOpen} setMenuOpen={setMenuOpen} goToChapter={goToChapter} />
-            </article>
-
-            <article className={`chapter chapter--visit${active === 2 ? " is-active" : ""}`} aria-label="O próximo capítulo">
-              <div className="chapter__art art-visit" onPointerMove={moveLight}>
-                <div className="visit-sun" data-reveal />
-                <div className="visit-type" data-reveal>HISTÓRIAS<br />QUE <em>FICAM.</em></div>
-                <div className="ticket" data-reveal><span>PRÓXIMA SESSÃO</span><b>sábado,<br />às quatro.</b><small>LEITURA · CAFÉ · CONVERSA</small></div>
-                <div className="book-illustration" data-reveal><div className="book-cover" data-reveal><span>UM MAPA<br />PARA<br /><b>SONHAR</b></span><i /></div><div className="book-pages" data-reveal /></div>
-                <div className="art-caption" data-reveal><span data-reveal>03 / 03</span><span data-reveal>SEU LUGAR ESTÁ RESERVADO.</span></div>
-              </div>
-              <SidePanel index={2} active={active} menuOpen={menuOpen} setMenuOpen={setMenuOpen} goToChapter={goToChapter} />
-            </article>
-          </div>
+    <main className="pet-site" ref={site} onPointerMove={followCursor}>
+      <div className="scroll-progress" aria-hidden="true"><i /></div>
+      <header className="site-header">
+        <button className="brand" aria-label="Bicho, início" onClick={() => goTo("#inicio")}><PawLogo /><span>bicho<span className="brand__dot">.</span></span></button>
+        <div className="site-header__actions">
+          <button className="start-button" onClick={() => goTo("#contato")}>Agendar <span>↗</span></button>
+          <button className={`menu-toggle${menuOpen ? " is-open" : ""}`} aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}><i /><i /></button>
         </div>
+      </header>
+      <div className={`menu-overlay${menuOpen ? " is-open" : ""}`} aria-hidden={!menuOpen}>
+        <p className="eyebrow">PRA ONDE VAMOS?</p>
+        <nav aria-label="Navegação principal">{navItems.map(([number, label, href]) => <button key={href} onClick={() => goTo(href)}><span>{number}</span>{label}<b>↗</b></button>)}</nav>
+        <p className="menu-overlay__footer">COM CARINHO, BICHO.</p>
+      </div>
+
+      <section className="page-section hero" id="inicio" aria-label="Apresentação da Bicho">
+        <div className="hero__stars" data-scroll data-depth="0.15" aria-hidden="true" />
+        <div className="hero__content" data-scroll-group>
+          <p className="eyebrow" data-scroll data-depth="0.09">CUIDADO DE OUTRO MUNDO</p>
+          <h1><span data-scroll data-depth="0.06">AMOR DE</span><span data-scroll data-depth="0.12">OUTRO</span><span data-scroll data-depth="0.19">PLANETA<span className="accent">.</span></span></h1>
+          <p className="hero__description" data-scroll data-depth="0.1">Banho, cuidado e muito carinho. Tudo para o seu melhor amigo viver o melhor dele.</p>
+          <button className="hero__button" data-scroll data-depth="0.13" onClick={() => goTo("#banho")}>Descubra a Bicho <span>↓</span></button>
+          <div className="hero__coordinates" data-scroll data-depth="0.08"><span>23°33' S</span><span>04 PATAS NO CHÃO</span></div>
+        </div>
+        <div className="hero__scroll" data-scroll data-depth="0.1"><span>ROLE PARA EXPLORAR</span><i /></div>
       </section>
-      <div className="scroll-cue" data-reveal aria-hidden="true"><span>ROLE PARA EXPLORAR</span><i /></div>
+
+      <section className="page-section service-section" id="banho" aria-label="Banho e tosa">
+        <div className="section-heading" data-scroll-group><span className="eyebrow" data-scroll>01 / BANHO & TOSA</span><span className="section-heading__index" data-scroll>[ B-01 ]</span></div>
+        <article className="service-card" data-scroll-group>
+          <div className="service-card__icon" data-scroll data-depth="0.12"><PawIcon /></div>
+          <div className="service-card__copy" data-scroll data-depth="0.07"><h2>Banho e tosa<br />com jeitinho.</h2><p>Água morninha, produtos suaves e aquele cafuné que não acaba.</p><button className="text-link" onClick={() => goTo("#contato")}>Conheça o cuidado <span>↗</span></button></div>
+          <div className="dog-orbit" data-scroll data-depth="0.19" aria-hidden="true"><DogIllustration /></div>
+        </article>
+        <div className="service-foot" data-scroll-group><span data-scroll>SEM PRESSA. SEM ESTRESSE.</span><span data-scroll>100% MAIS ABRAÇÁVEL →</span></div>
+      </section>
+
+      <section className="page-section clinic-section" id="clinica" aria-label="Clínica veterinária e day care">
+        <div className="section-heading" data-scroll-group><span className="eyebrow" data-scroll>02 / SAÚDE & BEM-ESTAR</span><span className="section-heading__index" data-scroll>[ B-02 ]</span></div>
+        <h2 className="section-title" data-scroll-group><span data-scroll>Um cuidado</span><span data-scroll>que <em className="accent">sente junto.</em></span></h2>
+        <div className="clinic-grid" data-scroll-group>
+          <article className="mini-card" data-scroll data-depth="0.06"><div className="mini-card__symbol">✳</div><span>01 — VET</span><h3>Clínica<br />de confiança</h3><p>Consultas com calma. Porque ouvir também faz parte de cuidar.</p></article>
+          <article className="mini-card mini-card--accent" data-scroll data-depth="0.15"><div className="mini-card__symbol">⌁</div><span>02 — DAY CARE</span><h3>Dia cheio<br />de amigos</h3><p>Brincadeira, descanso e companhia na medida certa.</p></article>
+        </div>
+        <div className="clinic-note" data-scroll data-depth="0.08"><PawIcon /><span>Pequenos focinhos. Grandes histórias.</span></div>
+      </section>
+
+      <section className="page-section story-section" id="historia" aria-label="A história da Bicho">
+        <div className="section-heading" data-scroll-group><span className="eyebrow" data-scroll>03 / NOSSA HISTÓRIA</span><span className="section-heading__index" data-scroll>[ DESDE 2011 ]</span></div>
+        <div className="story-section__main" data-scroll-group><p className="eyebrow" data-scroll>UM MONTE DE AMOR EM</p><div className="big-number" data-scroll data-depth="0.12"><span ref={years}>00</span><b>ANOS</b></div><h2 data-scroll>de rabinhos<br />abanando.</h2></div>
+        <p className="story-section__note" data-scroll data-depth="0.07">Desde o primeiro banho, a gente acredita que todo pet merece se sentir em casa. E todo tutor merece saber que ele está em boas patas.</p>
+        <div className="star-stamp" data-scroll data-depth="0.21">FEITO<br />COM<br /><span>AMOR</span></div>
+      </section>
+
+      <section className="page-section partner-section" id="parceiros" aria-label="Parceiros da Bicho">
+        <div className="section-heading" data-scroll-group><span className="eyebrow" data-scroll>04 / NOSSA TURMA</span><span className="section-heading__index" data-scroll>[ BONS DE PATAS ]</span></div>
+        <h2 className="section-title" data-scroll-group><span data-scroll>Juntos, a gente</span><span data-scroll>cuida <em className="accent">melhor.</em></span></h2>
+        <div className="partner-grid" data-scroll-group>
+          <div className="partner-mark partner-mark--one" data-scroll data-depth="0.05"><PawIcon /><span>petzito</span></div>
+          <div className="partner-mark partner-mark--two" data-scroll data-depth="0.11"><span className="partner-mark__sun">✳</span><span>VET<span className="accent">+</span></span></div>
+          <div className="partner-mark partner-mark--three" data-scroll data-depth="0.16"><span>mimo<span className="accent">.</span></span></div>
+          <div className="partner-mark partner-mark--four" data-scroll data-depth="0.23"><PawIcon /><span>AU! CLUB</span></div>
+        </div>
+        <p className="partner-note" data-scroll>Marcas que amam os bichos tanto quanto a gente.</p>
+      </section>
+
+      <section className="page-section contact-section" id="contato" aria-label="Contato e novidades">
+        <div className="section-heading" data-scroll-group><span className="eyebrow" data-scroll>05 / VEM PRA BICHO</span><span className="section-heading__index" data-scroll>[ OLÁ, AMIGO! ]</span></div>
+        <div className="contact-section__content" data-scroll-group><p className="eyebrow" data-scroll>O PRÓXIMO ABRAÇO</p><h2 data-scroll>começa<br />por aqui<span className="accent">.</span></h2><p data-scroll>Deixe seu e-mail e a gente te conta as novidades, dicas e mimos da Bicho.</p>
+          <form className="contact-form" onSubmit={subscribe} data-scroll><label className="sr-only" htmlFor="pet-email">Seu e-mail</label><input id="pet-email" type="email" placeholder="seu melhor e-mail" required /><button type="submit">{subscribed ? "Combinado! ✓" : "Quero novidades ↗"}</button></form>
+          <p className="contact-legal" data-scroll>{subscribed ? "Oba! Seu lugar na nossa turma está guardado." : "Sem spam. Só coisas boas para você e seu pet."}</p>
+        </div>
+        <footer className="site-footer" data-scroll-group data-scroll><span data-scroll>bicho<span className="accent">.</span> <small>© 2026 — FEITO COM AMOR E PATAS.</small></span><span className="footer-social" data-scroll>IG &nbsp; TT &nbsp; WA ↗</span></footer>
+      </section>
+      <div className="cursor-glow" aria-hidden="true" />
     </main>
   );
 }
 
-function Cover({ color, title, large = false }: { color: string; title: string; large?: boolean }) {
-  return <div className={`comic-cover comic-cover--${color}${large ? " comic-cover--large" : ""}`} data-reveal><span className="comic-cover__issue">PF! &nbsp; Nº 08</span><b>{title}</b><i /><small>UMA HISTÓRIA ILUSTRADA</small></div>;
+function PawLogo() {
+  return <svg className="paw-logo" viewBox="0 0 32 32" fill="none" aria-hidden="true"><ellipse cx="16" cy="20" rx="8" ry="6" fill="currentColor" /><ellipse cx="7.7" cy="12" rx="3" ry="4" transform="rotate(-26 7.7 12)" fill="currentColor" /><ellipse cx="14.3" cy="7.2" rx="3" ry="4" transform="rotate(-8 14.3 7.2)" fill="currentColor" /><ellipse cx="21.4" cy="8" rx="3" ry="4" transform="rotate(12 21.4 8)" fill="currentColor" /><ellipse cx="26" cy="13.2" rx="3" ry="4" transform="rotate(28 26 13.2)" fill="currentColor" /></svg>;
 }
 
-function SidePanel({ index, active, menuOpen, setMenuOpen, goToChapter }: {
-  index: number;
-  active: number;
-  menuOpen: boolean;
-  setMenuOpen: (value: boolean) => void;
-  goToChapter: (index: number) => void;
-}) {
-  return (
-    <aside className={`chapter__panel panel--${index}`}>
-      <header className="panel__top" data-reveal><a className="wordmark" data-reveal href="#top" onClick={(event) => { event.preventDefault(); goToChapter(0); }}>P&F<span>®</span></a><span className="panel__edition" data-reveal>LIVRARIA INDEPENDENTE<br />SÃO PAULO · BRASIL</span></header>
-      <div className="panel__center" data-reveal><div className="panel__counter" data-reveal><span>{String(active + 1).padStart(2, "0")}</span><i /> <span>03</span></div>
-        <button className={`menu-button${menuOpen ? " is-open" : ""}`} data-reveal aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}><i /><i /><span>{menuOpen ? "FECHAR" : "MENU"}</span></button>
-        <nav className={`panel__nav${menuOpen ? " is-visible" : ""}`} aria-label="Navegação por capítulos" data-reveal>{chapters.map((chapter, i) => <button key={chapter} data-reveal className={active === i ? "is-active" : ""} onClick={() => goToChapter(i)}><span>0{i + 1}</span>{chapter}<b>↗</b></button>)}</nav>
-      </div>
-      <footer className="panel__bottom" data-reveal><span data-reveal>{index === 0 ? "UM LUGAR FORA DA PÁGINA." : index === 1 ? "CADA CAPA É UMA PORTA." : "A GENTE SE VÊ POR AQUI."}</span><div className="panel__arrows" data-reveal><button data-reveal aria-label="Capítulo anterior" onClick={() => goToChapter(Math.max(index - 1, 0))}>←</button><button data-reveal aria-label="Próximo capítulo" onClick={() => goToChapter(Math.min(index + 1, 2))}>→</button></div></footer>
-    </aside>
-  );
+function PawIcon() {
+  return <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><ellipse cx="16" cy="20" rx="8" ry="6" fill="currentColor" /><ellipse cx="7.5" cy="12" rx="3" ry="4" transform="rotate(-28 7.5 12)" fill="currentColor" /><ellipse cx="14" cy="7" rx="3" ry="4" transform="rotate(-8 14 7)" fill="currentColor" /><ellipse cx="21" cy="8" rx="3" ry="4" transform="rotate(12 21 8)" fill="currentColor" /><ellipse cx="26" cy="13" rx="3" ry="4" transform="rotate(28 26 13)" fill="currentColor" /></svg>;
+}
+
+function DogIllustration() {
+  return <svg viewBox="0 0 220 220" fill="none" aria-hidden="true"><circle cx="110" cy="110" r="100" fill="#F25A43" /><path d="M57 86 41 44c-2-6 4-11 10-8l37 22m75 28 16-42c2-6-4-11-10-8l-37 22" fill="#F6D983" stroke="#15161A" strokeWidth="5" strokeLinejoin="round" /><path d="M55 104c0-34 25-58 55-58s55 24 55 58v43c0 28-23 50-55 50s-55-22-55-50v-43Z" fill="#F2D8B5" stroke="#15161A" strokeWidth="5" /><path d="M68 120c7-6 16-6 22 0m40 0c7-6 16-6 22 0" stroke="#15161A" strokeWidth="6" strokeLinecap="round" /><ellipse cx="110" cy="142" rx="12" ry="9" fill="#15161A" /><path d="M110 151c-1 14-13 19-23 12m23-12c1 14 13 19 23 12" stroke="#15161A" strokeWidth="5" strokeLinecap="round" /><path d="M65 154c-13-3-20 2-23 9m113-9c13-3 20 2 23 9" stroke="#15161A" strokeWidth="4" strokeLinecap="round" /><circle cx="91" cy="126" r="3" fill="#fff" /><circle cx="149" cy="126" r="3" fill="#fff" /></svg>;
 }
