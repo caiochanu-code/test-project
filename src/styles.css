@@ -119,35 +119,13 @@
 .panel__arrows button { width: 35px; height: 35px; padding: 0; border: 1px solid currentColor; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; font-size: 17px; transition: color .2s, background .2s; }
 .panel__arrows button:hover { background: #f5ecd8; color: #202839; }
 
-.chapter.is-active .panel__counter { animation: counter-pop .55s cubic-bezier(.2,.8,.2,1) both; }
-.chapter.is-active .shop-sign { animation: sign-arrive .85s cubic-bezier(.2,.8,.2,1) both; }
-.chapter.is-active .shelf--back { animation: shelf-arrive .8s .12s cubic-bezier(.2,.8,.2,1) both; }
-.chapter.is-active .shelf--front { animation: shelf-arrive .8s .24s cubic-bezier(.2,.8,.2,1) both; }
-.chapter.is-active .comic-cover { animation: cover-bob 4.8s ease-in-out infinite; }
-.chapter.is-active .comic-cover:nth-child(2) { animation-delay: .5s; }
-.chapter.is-active .comic-cover:nth-child(3) { animation-delay: 1s; }
-.chapter.is-active .sun-disc { animation: sun-breathe 8s ease-in-out infinite alternate; }
-.chapter.is-active .burst--one { animation: burst-float 4.2s ease-in-out infinite; }
-.chapter.is-active .burst--two { animation: burst-float 5.2s .6s ease-in-out infinite reverse; }
-.chapter.is-active .ticket { animation: ticket-arrive .75s .1s cubic-bezier(.2,.8,.2,1) both, ticket-float 4.4s 1s ease-in-out infinite; }
-.chapter.is-active .book-illustration { animation: book-arrive .8s .2s cubic-bezier(.2,.8,.2,1) both; }
-.chapter.is-active .book-cover { animation: book-glow 4s 1s ease-in-out infinite alternate; }
-.shop-sign, .shelf--back, .shelf--front, .comic-cover, .sun-disc, .burst, .ticket, .book-illustration, .book-cover { will-change: transform, translate, opacity; }
+[data-reveal] { will-change: opacity, translate, scale, rotate, filter; }
+[data-reveal]:not([data-revealed="true"]) { opacity: 0; }
 .sun-disc { translate: var(--parallax-far, 0px) 0; }
 .window-grid, .cover-stack, .book-illustration { translate: var(--parallax-near, 0px) 0; }
-.story-orbit { animation: orbit-turn 90s linear infinite; transform-origin: 50% 50%; }
+.story-orbit { animation: orbit-turn 24s linear infinite; transform-origin: 50% 50%; }
 .orbit-two { animation-direction: reverse; }
 
-@keyframes counter-pop { from { scale: .75; opacity: .3; } to { scale: 1; opacity: 1; } }
-@keyframes sign-arrive { from { opacity: 0; transform: translate3d(24px, 16px, 0) rotate(-7deg) scale(.96); } to { opacity: 1; transform: translate3d(0,0,0) rotate(-2deg) scale(1); } }
-@keyframes shelf-arrive { from { opacity: 0; translate: 0 28px; } to { opacity: 1; translate: 0 0; } }
-@keyframes cover-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
-@keyframes sun-breathe { from { scale: .96; } to { scale: 1.04; } }
-@keyframes burst-float { 0%, 100% { translate: 0 0; rotate: 0deg; } 50% { translate: 0 -8px; rotate: 4deg; } }
-@keyframes ticket-arrive { from { opacity: 0; translate: -18px 18px; } to { opacity: 1; translate: 0 0; } }
-@keyframes ticket-float { 0%, 100% { rotate: 0deg; } 50% { rotate: 2deg; } }
-@keyframes book-arrive { from { opacity: 0; translate: 20px 24px; } to { opacity: 1; translate: 0 0; } }
-@keyframes book-glow { from { filter: saturate(.9); } to { filter: saturate(1.24) brightness(1.06); } }
 @keyframes orbit-turn { to { rotate: 360deg; } }
 
 .art-shop { background: #ead6a8; }
