@@ -91,13 +91,19 @@
 .text-link { margin-top: 12px; padding: 0 0 5px; display: inline-flex; gap: 12px; border: 0; border-bottom: 1px solid #ff6047; background: transparent; color: #f5f2ed; font-size: 10px; }
 .dog-orbit { width: min(33vw, 300px); aspect-ratio: 1; justify-self: center; display: grid; place-items: center; border: 1px solid #ffffff20; border-radius: 50%; background: radial-gradient(circle,#595a5b,#38393c 68%,transparent 69%); }
 .dog-orbit svg { width: 92%; height: 92%; filter: drop-shadow(0 12px 15px #0005); }
+.dog-eyes { transform-box: fill-box; transform-origin: center; transform: scaleY(var(--eye-open, .16)); }
+.dog-mouth { transform-box: fill-box; transform-origin: 50% 8%; transform: scaleY(var(--mouth-open, .08)); }
+.dog-tongue { opacity: var(--tongue-open, 0); transform-box: fill-box; transform-origin: center; transform: scale(var(--tongue-open, 0)); }
 .service-foot { display: flex; justify-content: space-between; gap: 12px; color: #74767b; font-size: 8px; letter-spacing: .1em; }
 
 .clinic-section { background: #090a0d; }
 .section-title { margin: clamp(18px, 4vh, 40px) 0; display: flex; flex-direction: column; font-size: clamp(22px, 3.3vw, 46px); font-weight: 400; letter-spacing: -.09em; line-height: 1.08; }
 .clinic-grid { width: min(100%, 900px); align-self: center; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.mini-card { min-height: min(33vh, 270px); padding: clamp(15px, 2.4vw, 30px); border: 1px solid #3a3b40; background: #292a2e; }
+.mini-card { position: relative; min-height: min(33vh, 270px); padding: clamp(15px, 2.4vw, 30px); border: 1px solid #3a3b40; background: #292a2e; }
 .mini-card--accent { border-color: #ff5b42; background: #ff5b42; color: #171719; }
+.mini-card[data-scroll-effect="folder"] { transform-origin: 50% 0%; transform-style: preserve-3d; backface-visibility: hidden; transform: perspective(1000px) rotateX(var(--folder-angle, 74deg)) translate3d(0, calc(var(--reveal-y, 66px) + var(--parallax-y, 0px)), 0) scale(var(--reveal-scale, .9)); }
+.mini-card[data-scroll-effect="folder"]::before { content: ""; position: absolute; z-index: 2; top: -13px; left: 13px; width: 76px; height: 14px; border-radius: 5px 5px 0 0; background: var(--folder-tab, #44464c); transform: perspective(520px) rotateX(var(--folder-flap, 104deg)); transform-origin: 50% 100%; backface-visibility: hidden; }
+.mini-card--accent[data-scroll-effect="folder"] { --folder-tab: #e44c36; }
 .mini-card__symbol { margin-bottom: clamp(14px, 2vh, 24px); color: #ff654e; font-size: 28px; }
 .mini-card--accent .mini-card__symbol, .mini-card--accent > span, .mini-card--accent p { color: #2c1713; }
 .mini-card > span { color: #96969a; font-size: 8px; letter-spacing: .11em; }

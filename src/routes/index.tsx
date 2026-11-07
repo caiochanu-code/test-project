@@ -45,8 +45,8 @@ function Index() {
         for (const element of elements) {
           const bounds = element.getBoundingClientRect();
           const index = stagger.get(element) ?? 0;
-          const start = viewport * 0.9 - index * 3;
-          const end = viewport * 0.43 - index * 3;
+          const start = viewport * 0.9 - index * 42;
+          const end = viewport * 0.43 - index * 42;
           const reveal = Math.min(1, Math.max(0, (start - bounds.top) / Math.max(1, start - end)));
           const depth = Number(element.dataset.depth ?? 0.08);
           const center = bounds.top + bounds.height / 2;
@@ -55,6 +55,20 @@ function Index() {
           element.style.setProperty("--reveal-y", `${(1 - reveal) * 66}px`);
           element.style.setProperty("--reveal-scale", String(0.9 + reveal * 0.1));
           element.style.setProperty("--parallax-y", `${parallax}px`);
+          if (element.hasAttribute("data-expression")) {
+            const eyeMotion = Math.min(1, Math.max(0, (reveal - 0.12) / 0.68));
+            const mouthMotion = Math.min(1, Math.max(0, (reveal - 0.42) / 0.5));
+            const easeEye = eyeMotion * eyeMotion * (3 - 2 * eyeMotion);
+            const easeMouth = mouthMotion * mouthMotion * (3 - 2 * mouthMotion);
+            element.style.setProperty("--eye-open", String(0.16 + easeEye * 0.84));
+            element.style.setProperty("--mouth-open", String(0.08 + easeMouth * 0.92));
+            element.style.setProperty("--tongue-open", String(easeMouth));
+          }
+          if (element.dataset.scrollEffect === "folder") {
+            const open = reveal * reveal * (3 - 2 * reveal);
+            element.style.setProperty("--folder-angle", `${(1 - open) * 74}deg`);
+            element.style.setProperty("--folder-flap", `${(1 - open) * 104}deg`);
+          }
         }
 
         const maximum = Math.max(1, document.documentElement.scrollHeight - viewport);
@@ -62,8 +76,9 @@ function Index() {
         const history = root.querySelector<HTMLElement>("#historia");
         if (history && years.current) {
           const rect = history.getBoundingClientRect();
-          const progress = Math.min(1, Math.max(0, (viewport * 0.85 - rect.top) / (rect.height * 0.72)));
-          years.current.textContent = String(Math.round(progress * 15)).padStart(2, "0");
+          const progress = Math.min(1, Math.max(0, (viewport * 0.88 - rect.top) / (rect.height * 1.65)));
+          const easedProgress = progress * progress * (3 - 2 * progress);
+          years.current.textContent = String(Math.floor(easedProgress * 15)).padStart(2, "0");
         }
       });
     };
@@ -126,7 +141,7 @@ function Index() {
         <article className="service-card" data-scroll-group>
           <div className="service-card__icon" data-scroll data-depth="0.12"><PawIcon /></div>
           <div className="service-card__copy" data-scroll data-depth="0.07"><h2>Banho e tosa<br />com jeitinho.</h2><p>Água morninha, produtos suaves e aquele cafuné que não acaba.</p><button className="text-link" onClick={() => goTo("#contato")}>Conheça o cuidado <span>↗</span></button></div>
-          <div className="dog-orbit" data-scroll data-depth="0.19" aria-hidden="true"><DogIllustration /></div>
+          <div className="dog-orbit" data-scroll data-expression data-depth="0.19" aria-hidden="true"><DogIllustration /></div>
         </article>
         <div className="service-foot" data-scroll-group><span data-scroll>SEM PRESSA. SEM ESTRESSE.</span><span data-scroll>100% MAIS ABRAÇÁVEL →</span></div>
       </section>
@@ -135,8 +150,8 @@ function Index() {
         <div className="section-heading" data-scroll-group><span className="eyebrow" data-scroll>02 / SAÚDE & BEM-ESTAR</span><span className="section-heading__index" data-scroll>[ B-02 ]</span></div>
         <h2 className="section-title" data-scroll-group><span data-scroll>Um cuidado</span><span data-scroll>que <em className="accent">sente junto.</em></span></h2>
         <div className="clinic-grid" data-scroll-group>
-          <article className="mini-card" data-scroll data-depth="0.06"><div className="mini-card__symbol">✳</div><span>01 — VET</span><h3>Clínica<br />de confiança</h3><p>Consultas com calma. Porque ouvir também faz parte de cuidar.</p></article>
-          <article className="mini-card mini-card--accent" data-scroll data-depth="0.15"><div className="mini-card__symbol">⌁</div><span>02 — DAY CARE</span><h3>Dia cheio<br />de amigos</h3><p>Brincadeira, descanso e companhia na medida certa.</p></article>
+          <article className="mini-card" data-scroll data-scroll-effect="folder" data-depth="0.06"><div className="mini-card__symbol">✳</div><span>01 — VET</span><h3>Clínica<br />de confiança</h3><p>Consultas com calma. Porque ouvir também faz parte de cuidar.</p></article>
+          <article className="mini-card mini-card--accent" data-scroll data-scroll-effect="folder" data-depth="0.15"><div className="mini-card__symbol">⌁</div><span>02 — DAY CARE</span><h3>Dia cheio<br />de amigos</h3><p>Brincadeira, descanso e companhia na medida certa.</p></article>
         </div>
         <div className="clinic-note" data-scroll data-depth="0.08"><PawIcon /><span>Pequenos focinhos. Grandes histórias.</span></div>
       </section>
@@ -182,5 +197,19 @@ function PawIcon() {
 }
 
 function DogIllustration() {
-  return <svg viewBox="0 0 220 220" fill="none" aria-hidden="true"><circle cx="110" cy="110" r="100" fill="#F25A43" /><path d="M57 86 41 44c-2-6 4-11 10-8l37 22m75 28 16-42c2-6-4-11-10-8l-37 22" fill="#F6D983" stroke="#15161A" strokeWidth="5" strokeLinejoin="round" /><path d="M55 104c0-34 25-58 55-58s55 24 55 58v43c0 28-23 50-55 50s-55-22-55-50v-43Z" fill="#F2D8B5" stroke="#15161A" strokeWidth="5" /><path d="M68 120c7-6 16-6 22 0m40 0c7-6 16-6 22 0" stroke="#15161A" strokeWidth="6" strokeLinecap="round" /><ellipse cx="110" cy="142" rx="12" ry="9" fill="#15161A" /><path d="M110 151c-1 14-13 19-23 12m23-12c1 14 13 19 23 12" stroke="#15161A" strokeWidth="5" strokeLinecap="round" /><path d="M65 154c-13-3-20 2-23 9m113-9c13-3 20 2 23 9" stroke="#15161A" strokeWidth="4" strokeLinecap="round" /><circle cx="91" cy="126" r="3" fill="#fff" /><circle cx="149" cy="126" r="3" fill="#fff" /></svg>;
+  return <svg className="dog-illustration" viewBox="0 0 220 220" fill="none" aria-hidden="true">
+    <circle cx="110" cy="110" r="100" fill="#F25A43" />
+    <path d="M57 86 41 44c-2-6 4-11 10-8l37 22m75 28 16-42c2-6-4-11-10-8l-37 22" fill="#F6D983" stroke="#15161A" strokeWidth="5" strokeLinejoin="round" />
+    <path d="M55 104c0-34 25-58 55-58s55 24 55 58v43c0 28-23 50-55 50s-55-22-55-50v-43Z" fill="#F2D8B5" stroke="#15161A" strokeWidth="5" />
+    <g className="dog-eyes">
+      <ellipse cx="91" cy="124" rx="6" ry="5" fill="#15161A" />
+      <ellipse cx="143" cy="124" rx="6" ry="5" fill="#15161A" />
+      <circle cx="93" cy="122" r="1.7" fill="#fff" />
+      <circle cx="145" cy="122" r="1.7" fill="#fff" />
+    </g>
+    <ellipse cx="110" cy="143" rx="12" ry="9" fill="#15161A" />
+    <path className="dog-mouth" d="M98 151q12 7 24 0 5 4 3 13-4 15-15 15t-15-15q-2-9 3-13Z" fill="#32191C" stroke="#15161A" strokeWidth="3" strokeLinejoin="round" />
+    <path className="dog-tongue" d="M102 163q8 5 16 0 0 12-8 12t-8-12Z" fill="#F46F74" />
+    <path d="M65 154c-13-3-20 2-23 9m113-9c13-3 20 2 23 9" stroke="#15161A" strokeWidth="4" strokeLinecap="round" />
+  </svg>;
 }
