@@ -121,13 +121,17 @@
 
 [data-reveal] { will-change: opacity, translate, scale, rotate, filter; }
 [data-reveal]:not([data-revealed="true"]) { opacity: 0; }
-.sun-disc { translate: var(--parallax-far, 0px) 0; }
-.window-grid, .cover-stack, .book-illustration { translate: var(--parallax-near, 0px) 0; }
-.story-orbit { animation: orbit-turn 24s linear infinite; transform-origin: 50% 50%; }
-.orbit-two { animation-direction: reverse; }
-
-@keyframes orbit-turn { to { rotate: 360deg; } }
-
+.chapter.is-active[data-prepared="true"] [data-reveal] {
+  animation: element-arrives .72s cubic-bezier(.12,.8,.1,1) both;
+  animation-delay: calc(var(--reveal-order, 0) * 64ms);
+}
+.scroll-cue[data-revealed="true"] { animation: element-arrives .72s .1s cubic-bezier(.12,.8,.1,1) both; }
+[data-reveal] { translate: var(--scroll-x, 0px) var(--scroll-y, 0px); }
+@keyframes element-arrives {
+  0% { opacity: 0; scale: .48; rotate: -8deg; filter: blur(14px); }
+  72% { opacity: 1; scale: 1.08; rotate: 1deg; filter: blur(0); }
+  100% { opacity: 1; scale: 1; rotate: 0deg; filter: blur(0); }
+}
 .art-shop { background: #ead6a8; }
 .art-shop::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(151deg, #f0d9a9 0 56%, #d0ae76 56.2% 100%); }
 .sun-disc { position: absolute; width: min(27vw, 370px); aspect-ratio: 1; border-radius: 50%; background: #d65a42; top: 8%; left: 56%; opacity: .93; }

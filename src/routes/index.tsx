@@ -18,7 +18,6 @@ const chapters = ["A loja", "As histórias", "O próximo capítulo"];
 
 function Index() {
   const story = useRef<HTMLElement>(null);
-  const revealAnimations = useRef(new WeakMap<HTMLElement, Animation>());
   const [active, setActive] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -53,10 +52,13 @@ function Index() {
       section.style.setProperty("--story-progress", String(currentProgress));
       section.querySelectorAll<HTMLElement>(".chapter").forEach((chapter, index) => {
         const sceneProgress = Math.min(1, Math.max(0, currentProgress * (chapters.length - 1) - index));
-        const parallax = (0.5 - sceneProgress) * 22;
         chapter.style.setProperty("--scene-progress", String(sceneProgress));
-        chapter.style.setProperty("--parallax-far", `${parallax}px`);
-        chapter.style.setProperty("--parallax-near", `${-parallax * 1.6}px`);
+        chapter.querySelectorAll<HTMLElement>("[data-reveal]").forEach((element, elementIndex) => {
+          const layerDepth = 12 + (elementIndex % 5) * 11;
+          const verticalDrift = Math.sin(sceneProgress * Math.PI) * (5 + (elementIndex % 3) * 6);
+          element.style.setProperty("--scroll-x", `${sceneProgress * layerDepth}px`);
+          element.style.setProperty("--scroll-y", `${verticalDrift}px`);
+        });
       });
       const nextActive = Math.min(chapters.length - 1, Math.round(currentProgress * (chapters.length - 1)));
       setActive((previous) => previous === nextActive ? previous : nextActive);
@@ -78,7 +80,11 @@ function Index() {
   useEffect(() => {
     const allElements = story.current?.querySelectorAll<HTMLElement>("[data-reveal]");
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      allElements?.forEach((element) => { element.dataset.revealed = "true"; });
+      allElements?.forEach((element, index) => {
+        element.dataset.revealed = "true";
+        element.style.setProperty("--reveal-order", String(index));
+      });
+      story.current?.querySelectorAll<HTMLElement>(".chapter").forEach((chapter) => { chapter.dataset.prepared = "true"; });
       return;
     }
     const chapter = story.current?.querySelectorAll<HTMLElement>(".chapter")[active];
@@ -87,32 +93,13 @@ function Index() {
       const cue = story.current?.parentElement?.querySelector<HTMLElement>(".scroll-cue[data-reveal]");
       if (cue) elements.push(cue);
     }
-    if (!elements.length) return;
+    if (!chapter || !elements.length) return;
 
     elements.forEach((element, index) => {
-      revealAnimations.current.get(element)?.cancel();
-      element.dataset.revealed = "false";
-      const direction = index % 4;
-      const offset = direction === 0 ? "0px 52px" : direction === 1 ? "-52px 0px" : direction === 2 ? "52px 0px" : "0px -44px";
-      const animation = element.animate(
-        [
-          { opacity: 0, translate: offset, scale: direction === 3 ? 0.68 : 0.82, rotate: direction === 3 ? "-9deg" : "0deg", filter: "blur(12px)" },
-          { opacity: 1, translate: "0px 0px", scale: 1, rotate: "0deg", filter: "blur(0px)" },
-        ],
-        {
-          duration: 850,
-          delay: index * 70,
-          easing: "cubic-bezier(0.12, 0.8, 0.1, 1)",
-          fill: "both",
-        },
-      );
-      animation.onfinish = () => {
-        element.dataset.revealed = "true";
-        animation.cancel();
-        revealAnimations.current.delete(element);
-      };
-      revealAnimations.current.set(element, animation);
+      element.dataset.revealed = "true";
+      element.style.setProperty("--reveal-order", String(index));
     });
+    chapter.dataset.prepared = "true";
   }, [active]);
 
   const moveLight = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -136,7 +123,7 @@ function Index() {
         <div className="story__stage">
           <div className="scroll-meter" aria-hidden="true"><i /></div>
           <div className="story__track">
-            <article className={`chapter chapter--shop${active === 0 ? " is-active" : ""}`} aria-label="A loja">
+                <article className={`chapter chapter--shop${active === 0 ? " is-active" : ""}`} aria-label="A loja">
               <div className="chapter__art art-shop" onPointerMove={moveLight}>
                 <div className="sun-disc" data-reveal />
                 <div className="shop-sign" data-reveal><span>PF</span><b>PAPEL &<br />FANTASIA</b><small>QUADRINHOS · SÃO PAULO</small></div>
