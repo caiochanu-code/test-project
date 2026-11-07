@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,26 +24,61 @@ function Index() {
   useEffect(() => {
     const section = story.current;
     if (!section) return;
+    let targetProgress = 0;
+    let currentProgress = 0;
     let frame = 0;
-    const update = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const bounds = section.getBoundingClientRect();
-        const range = Math.max(1, section.offsetHeight - window.innerHeight);
-        const progress = Math.min(1, Math.max(0, -bounds.top / range));
-        section.style.setProperty("--story-progress", String(progress));
-        setActive(Math.min(chapters.length - 1, Math.round(progress * (chapters.length - 1))));
-      });
+    let lastTime = 0;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const readScroll = (immediate = false) => {
+      const bounds = section.getBoundingClientRect();
+      const range = Math.max(1, section.offsetHeight - window.innerHeight);
+      targetProgress = Math.min(1, Math.max(0, -bounds.top / range));
+      if (immediate) {
+        currentProgress = targetProgress;
+        animate(0);
+        return;
+      }
+      if (!frame) frame = requestAnimationFrame(animate);
     };
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
+
+    const animate = (time: number) => {
+      const elapsed = lastTime ? Math.min(64, time - lastTime) : 16;
+      lastTime = time;
+      const easing = reduceMotion.matches ? 1 : 1 - Math.exp(-elapsed / 105);
+      currentProgress += (targetProgress - currentProgress) * easing;
+      if (Math.abs(targetProgress - currentProgress) < 0.00008) currentProgress = targetProgress;
+
+      section.style.setProperty("--story-progress", String(currentProgress));
+      section.querySelectorAll<HTMLElement>(".chapter").forEach((chapter, index) => {
+        const sceneProgress = Math.min(1, Math.max(0, currentProgress * (chapters.length - 1) - index));
+        const parallax = (0.5 - sceneProgress) * 22;
+        chapter.style.setProperty("--scene-progress", String(sceneProgress));
+        chapter.style.setProperty("--parallax-far", `${parallax}px`);
+        chapter.style.setProperty("--parallax-near", `${-parallax * 1.6}px`);
+      });
+      const nextActive = Math.min(chapters.length - 1, Math.round(currentProgress * (chapters.length - 1)));
+      setActive((previous) => previous === nextActive ? previous : nextActive);
+
+      if (currentProgress !== targetProgress) frame = requestAnimationFrame(animate);
+      else { frame = 0; lastTime = 0; }
+    };
+
+    readScroll(true);
+    window.addEventListener("scroll", readScroll, { passive: true });
+    window.addEventListener("resize", readScroll);
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", readScroll);
+      window.removeEventListener("resize", readScroll);
     };
   }, []);
+
+  const moveLight = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty("--pointer-x", `${event.clientX - bounds.left}px`);
+    event.currentTarget.style.setProperty("--pointer-y", `${event.clientY - bounds.top}px`);
+  };
 
   const goToChapter = (index: number) => {
     setMenuOpen(false);
@@ -58,9 +93,10 @@ function Index() {
     <main>
       <section className="story" ref={story} aria-label="Uma viagem pela Papel & Fantasia">
         <div className="story__stage">
+          <div className="scroll-meter" aria-hidden="true"><i /></div>
           <div className="story__track">
-            <article className="chapter chapter--shop" aria-label="A loja">
-              <div className="chapter__art art-shop">
+            <article className={`chapter chapter--shop${active === 0 ? " is-active" : ""}`} aria-label="A loja">
+              <div className="chapter__art art-shop" onPointerMove={moveLight}>
                 <div className="sun-disc" />
                 <div className="shop-sign"><span>PF</span><b>PAPEL &<br />FANTASIA</b><small>QUADRINHOS · SÃO PAULO</small></div>
                 <div className="window-grid"><i /><i /><i /><i /><i /><i /></div>
@@ -73,8 +109,8 @@ function Index() {
               <SidePanel index={0} active={active} menuOpen={menuOpen} setMenuOpen={setMenuOpen} goToChapter={goToChapter} />
             </article>
 
-            <article className="chapter chapter--stories" aria-label="As histórias">
-              <div className="chapter__art art-stories">
+            <article className={`chapter chapter--stories${active === 1 ? " is-active" : ""}`} aria-label="As histórias">
+              <div className="chapter__art art-stories" onPointerMove={moveLight}>
                 <div className="story-orbit orbit-one" /><div className="story-orbit orbit-two" />
                 <div className="cover-stack"><Cover color="blue" title="O OUTRO LADO" large /><Cover color="coral" title="BICHO-LUZ" large /><Cover color="yellow" title="SOL DE INVERNO" large /></div>
                 <div className="burst burst--one">NOVO<br />MUNDO</div>
@@ -85,8 +121,8 @@ function Index() {
               <SidePanel index={1} active={active} menuOpen={menuOpen} setMenuOpen={setMenuOpen} goToChapter={goToChapter} />
             </article>
 
-            <article className="chapter chapter--visit" aria-label="O próximo capítulo">
-              <div className="chapter__art art-visit">
+            <article className={`chapter chapter--visit${active === 2 ? " is-active" : ""}`} aria-label="O próximo capítulo">
+              <div className="chapter__art art-visit" onPointerMove={moveLight}>
                 <div className="visit-sun" />
                 <div className="visit-type">HISTÓRIAS<br />QUE <em>FICAM.</em></div>
                 <div className="ticket"><span>PRÓXIMA SESSÃO</span><b>sábado,<br />às quatro.</b><small>LEITURA · CAFÉ · CONVERSA</small></div>
