@@ -58,7 +58,7 @@ function Index() {
     const orbs = Array.from(hero.querySelectorAll<HTMLElement>("[data-speed]"));
     let mx = 0, my = 0;
     const apply = () => orbs.forEach((o) => {
-      const sp = Number(o.dataset.speed);
+      const sp = Number(o.dataset["speed"]);
       o.style.transform = `translate(${mx * sp * 40}px, ${scrollY * sp + my * sp * 40}px)`;
     });
     const onMove = (e: PointerEvent) => { mx = e.clientX / innerWidth - 0.5; my = e.clientY / innerHeight - 0.5; apply(); };
@@ -231,7 +231,7 @@ function Process() {
   const [active, setActive] = useState(0);
   const refs = useRef<(HTMLDivElement | null)[]>([]);
   useEffect(() => {
-    const io = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && setActive(Number((e.target as HTMLElement).dataset.i))), { rootMargin: "-45% 0px -45% 0px" });
+    const io = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && setActive(Number((e.target as HTMLElement).dataset["i"]))), { rootMargin: "-45% 0px -45% 0px" });
     refs.current.forEach((r) => r && io.observe(r));
     return () => io.disconnect();
   }, []);
@@ -293,7 +293,7 @@ function Counter({ to, label, suffix = "+" }: { to: number; label: string; suffi
     const el = ref.current;
     if (!el) return;
     const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
+      if (!e?.isIntersecting) return;
       io.disconnect();
       const start = performance.now();
       const step = (t: number) => { const p = Math.min(1, (t - start) / 1400); setN(Math.round(to * (1 - Math.pow(1 - p, 3)))); if (p < 1) requestAnimationFrame(step); };
