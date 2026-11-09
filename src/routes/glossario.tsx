@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { categories, terms } from "@/lib/terms";
 
 export const Route = createFileRoute("/glossario")({
-  validateSearch: (s: Record<string, unknown>): { q?: string } => ({ q: typeof s.q === "string" ? s.q : undefined }),
+  validateSearch: (s: Record<string, unknown>): { q?: string } => (typeof s["q"] === "string" ? { q: s["q"] } : {}),
   head: () => ({
     meta: [
       { title: "Glossário de Web Design A–Z — Anatomia" },
