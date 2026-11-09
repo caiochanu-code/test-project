@@ -1,215 +1,402 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
+import { useReveal } from "@/lib/use-reveal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Bicho. — cuidado de outro mundo" },
-      { name: "description", content: "Banho, tosa e cuidado veterinário com muito carinho. Conheça a Bicho." },
+      { title: "Anatomia — o site que ensina web design" },
+      { name: "description", content: "Estúdio de web design interativo: cada seção demonstra e explica um termo — hero, bento grid, parallax, tabs, accordion e mais." },
+      { property: "og:title", content: "Anatomia — o site que ensina web design" },
+      { property: "og:description", content: "Um site profissional que se explica. Ative o Raio-X e aprenda os termos de web design." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Index,
 });
 
-const navItems: [string, string, string][] = [
-  ["01", "Banho & tosa", "#banho"],
-  ["02", "Clínica", "#clinica"],
-  ["03", "Nossa história", "#historia"],
-  ["04", "Nossa turma", "#parceiros"],
-  ["05", "Contato", "#contato"],
-];
+const words = ["interfaces", "marcas", "experiências", "sites"];
+
+function rippleOn(e: MouseEvent<HTMLElement>) {
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  const s = document.createElement("span");
+  const size = Math.max(r.width, r.height);
+  s.className = "ripple";
+  Object.assign(s.style, { width: `${size}px`, height: `${size}px`, left: `${e.clientX - r.left - size / 2}px`, top: `${e.clientY - r.top - size / 2}px` });
+  el.appendChild(s);
+  setTimeout(() => s.remove(), 650);
+}
 
 function Index() {
-  const site = useRef<HTMLElement>(null);
-  const years = useRef<HTMLSpanElement>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
+  useReveal();
+  const [word, setWord] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
+  const [modal, setModal] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [pressed, setPressed] = useState(false);
+  const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const root = site.current;
-    if (!root) return;
-    const elements = Array.from(root.querySelectorAll<HTMLElement>("[data-scroll]"));
-    const stagger = new Map<HTMLElement, number>();
-    for (const element of elements) {
-      const group = element.closest("[data-scroll-group]") as HTMLElement | null;
-      const siblings = !group || group === element ? [element] : Array.from(group.querySelectorAll<HTMLElement>("[data-scroll]"));
-      stagger.set(element, siblings.indexOf(element));
-    }
-
-    let frame = 0;
-    const update = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        const viewport = window.innerHeight;
-        for (const element of elements) {
-          const bounds = element.getBoundingClientRect();
-          const index = stagger.get(element) ?? 0;
-          const start = viewport * 0.9 - index * 42;
-          const end = viewport * 0.43 - index * 42;
-          const reveal = Math.min(1, Math.max(0, (start - bounds.top) / Math.max(1, start - end)));
-          const depth = Number(element.dataset.depth ?? 0.08);
-          const center = bounds.top + bounds.height / 2;
-          const parallax = (viewport * 0.54 - center) * depth;
-          element.style.setProperty("--reveal-opacity", String(reveal));
-          element.style.setProperty("--reveal-y", `${(1 - reveal) * 66}px`);
-          element.style.setProperty("--reveal-scale", String(0.9 + reveal * 0.1));
-          element.style.setProperty("--parallax-y", `${parallax}px`);
-          if (element.hasAttribute("data-expression")) {
-            const eyeMotion = Math.min(1, Math.max(0, (reveal - 0.12) / 0.68));
-            const mouthMotion = Math.min(1, Math.max(0, (reveal - 0.42) / 0.5));
-            const easeEye = eyeMotion * eyeMotion * (3 - 2 * eyeMotion);
-            const easeMouth = mouthMotion * mouthMotion * (3 - 2 * mouthMotion);
-            element.style.setProperty("--eye-open", String(0.16 + easeEye * 0.84));
-            element.style.setProperty("--mouth-open", String(0.08 + easeMouth * 0.92));
-            element.style.setProperty("--tongue-open", String(easeMouth));
-          }
-          if (element.dataset.scrollEffect === "folder") {
-            const open = reveal * reveal * (3 - 2 * reveal);
-            element.style.setProperty("--folder-angle", `${(1 - open) * 74}deg`);
-            element.style.setProperty("--folder-flap", `${(1 - open) * 104}deg`);
-          }
-        }
-
-        const maximum = Math.max(1, document.documentElement.scrollHeight - viewport);
-        root.style.setProperty("--page-progress", String(Math.min(1, window.scrollY / maximum)));
-        const history = root.querySelector<HTMLElement>("#historia");
-        if (history && years.current) {
-          const rect = history.getBoundingClientRect();
-          const progress = Math.min(1, Math.max(0, (viewport * 0.88 - rect.top) / (rect.height * 1.65)));
-          const easedProgress = progress * progress * (3 - 2 * progress);
-          years.current.textContent = String(Math.floor(easedProgress * 15)).padStart(2, "0");
-        }
-      });
-    };
-
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
+    const t = setInterval(() => setWord((w) => (w + 1) % words.length), 2200);
+    return () => clearInterval(t);
   }, []);
 
-  const followCursor = (event: ReactPointerEvent<HTMLElement>) => {
-    event.currentTarget.style.setProperty("--cursor-x", `${event.clientX}px`);
-    event.currentTarget.style.setProperty("--cursor-y", `${event.clientY}px`);
-  };
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2600);
+    return () => clearTimeout(t);
+  }, [toast]);
 
-  const goTo = (id: string) => {
-    setMenuOpen(false);
-    document.querySelector(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const subscribe = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSubscribed(true);
-  };
+  // Parallax: orbes se movem em velocidades diferentes no scroll + mouse
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero) return;
+    const orbs = Array.from(hero.querySelectorAll<HTMLElement>("[data-speed]"));
+    let mx = 0, my = 0;
+    const apply = () => orbs.forEach((o) => {
+      const sp = Number(o.dataset.speed);
+      o.style.transform = `translate(${mx * sp * 40}px, ${scrollY * sp + my * sp * 40}px)`;
+    });
+    const onMove = (e: PointerEvent) => { mx = e.clientX / innerWidth - 0.5; my = e.clientY / innerHeight - 0.5; apply(); };
+    addEventListener("scroll", apply, { passive: true });
+    hero.addEventListener("pointermove", onMove);
+    return () => { removeEventListener("scroll", apply); hero.removeEventListener("pointermove", onMove); };
+  }, []);
 
   return (
-    <main className="pet-site" ref={site} onPointerMove={followCursor}>
-      <div className="scroll-progress" aria-hidden="true"><i /></div>
-      <header className="site-header">
-        <button className="brand" aria-label="Bicho, início" onClick={() => goTo("#inicio")}><PawLogo /><span>bicho<span className="brand__dot">.</span></span></button>
-        <div className="site-header__actions">
-          <button className="start-button" onClick={() => goTo("#contato")}>Agendar <span>↗</span></button>
-          <button className={`menu-toggle${menuOpen ? " is-open" : ""}`} aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}><i /><i /></button>
+    <>
+      <SiteHeader />
+      <main>
+        <section className="hero" id="hero" ref={heroRef} data-term="Hero Section">
+          <div className="hero-grid-bg" aria-hidden="true" />
+          <div className="orb orb-1" data-speed="0.25" data-term="Parallax" />
+          <div className="orb orb-2" data-speed="-0.15" />
+          <div className="orb orb-3" data-speed="0.4" />
+          <div className="wrap" style={{ position: "relative" }}>
+            <p className="mono kicker" data-term="Eyebrow">● Estúdio de web design — desde 2014</p>
+            <h1 className="display" data-term="Kinetic Typography">
+              <span className="line"><span>Desenhamos</span></span>
+              <span className="line"><span><span className="rotator"><span key={word}>{words[word]}</span></span></span></span>
+              <span className="line"><span>que se <em>explicam.</em></span></span>
+            </h1>
+          </div>
+          <div className="wrap hero-foot">
+            <p data-term="Subheadline">Este site é uma aula viva. Cada bloco demonstra um conceito de web design — ligue o <b>Raio-X</b> no topo e veja o nome de cada elemento.</p>
+            <div className="btns">
+              <a href="#contato" className="btn btn-primary" onClick={rippleOn} data-term="CTA Primário">Começar projeto <span className="arr">→</span></a>
+              <a href="/glossario" className="btn btn-ghost" onClick={rippleOn} data-term="Botão Ghost">Ver glossário</a>
+            </div>
+            <div className="scroll-cue mono hide-sm"><i />Role</div>
+          </div>
+        </section>
+
+        <div className="marquee" id="marquee" data-term="Marquee">
+          <div className="marquee-track">
+            {[0, 1].map((k) => ["Hero", "Grid", "Tipografia", "Paleta", "Parallax", "Microinteração", "Whitespace", "Hierarquia", "Contraste", "UX"].map((w) => <span key={`${k}${w}`}>{w}</span>))}
+          </div>
         </div>
-      </header>
-      <div className={`menu-overlay${menuOpen ? " is-open" : ""}`} aria-hidden={!menuOpen}>
-        <p className="eyebrow">PRA ONDE VAMOS?</p>
-        <nav aria-label="Navegação principal">{navItems.map(([number, label, href]) => <button key={href} onClick={() => goTo(href)}><span>{number}</span>{label}<b>↗</b></button>)}</nav>
-        <p className="menu-overlay__footer">COM CARINHO, BICHO.</p>
-      </div>
 
-      <section className="page-section hero" id="inicio" aria-label="Apresentação da Bicho">
-        <div className="hero__stars" data-scroll data-depth="0.15" aria-hidden="true" />
-        <div className="hero__content" data-scroll-group>
-          <p className="eyebrow" data-scroll data-depth="0.09">CUIDADO DE OUTRO MUNDO</p>
-          <h1><span data-scroll data-depth="0.06">AMOR DE</span><span data-scroll data-depth="0.12">OUTRO</span><span data-scroll data-depth="0.19">PLANETA<span className="accent">.</span></span></h1>
-          <p className="hero__description" data-scroll data-depth="0.1">Banho, cuidado e muito carinho. Tudo para o seu melhor amigo viver o melhor dele.</p>
-          <button className="hero__button" data-scroll data-depth="0.13" onClick={() => goTo("#banho")}>Descubra a Bicho <span>↓</span></button>
-          <div className="hero__coordinates" data-scroll data-depth="0.08"><span>23°33' S</span><span>04 PATAS NO CHÃO</span></div>
+        <section className="sec" id="bento">
+          <div className="wrap">
+            <div className="sec-head reveal">
+              <div><p className="mono kicker">[01] Componentes</p><h2 className="display">Uma vitrine em bento.</h2></div>
+              <p>Cards de tamanhos diferentes formam um <b>Bento Grid</b>. Passe o mouse, clique e brinque — cada um é um estado ou efeito.</p>
+            </div>
+            <div className="bento" data-term="Bento Grid">
+              <article className="card c-a reveal" data-term="Gradiente">
+                <span className="mono">Card destaque</span>
+                <div><h3>Design é como funciona.</h3><p>Gradientes chamam o olhar para o ponto mais importante da composição.</p></div>
+              </article>
+              <article className="card c-b glass-stage reveal" data-term="Glassmorphism">
+                <span className="mono" style={{ color: "var(--primary-foreground)" }}>Vidro fosco</span>
+                <div className="glass"><b>Glassmorphism</b><br /><small>backdrop-filter: blur(16px)</small></div>
+              </article>
+              <article className="card c-c neu-stage reveal" data-term="Neumorphism">
+                <span className="mono">Clique e segure</span>
+                <button className={`neu${pressed ? " is-pressed" : ""}`} onClick={() => setPressed(!pressed)} aria-pressed={pressed}>{pressed ? "ON" : "OFF"}</button>
+              </article>
+              <article className="card c-d reveal" data-term="Microinteração">
+                <span className="mono">Curtir</span>
+                <div><button className={`heart${liked ? " is-on" : ""}`} onClick={() => { setLiked(!liked); setToast(liked ? "Curtida removida" : "Você curtiu ♥"); }} aria-label="Curtir">{liked ? "♥" : "♡"}</button><p>Uma resposta pequena que dá vida à ação.</p></div>
+              </article>
+              <article className="card c-e reveal" data-term="Skeleton Loader">
+                <span className="mono">Carregando…</span>
+                <div style={{ display: "grid", gap: 10 }}><div className="skel" style={{ width: "70%" }} /><div className="skel" /><div className="skel" style={{ width: "45%" }} /></div>
+              </article>
+              <article className="card c-f reveal" data-term="Tooltip">
+                <span className="mono">Passe o mouse</span>
+                <div className="btns">
+                  <span className="tip" data-tip="Eu sou um tooltip!"><button className="btn btn-ghost" style={{ height: 44 }}>Tooltip</button></span>
+                  <button className="btn btn-ghost" style={{ height: 44 }} onClick={() => setToast("Isto é um toast ✓")} data-term="Toast">Toast</button>
+                  <button className="btn" style={{ height: 44 }} onClick={() => setModal(true)} data-term="Modal">Abrir modal</button>
+                </div>
+              </article>
+              <article className="card c-g reveal" data-term="Hover State">
+                <span className="mono">Estados</span>
+                <div><h3>Hover, focus, active.</h3><p>Este card sobe e ganha sombra no hover. Use Tab para ver o focus state nos botões.</p></div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <DesignSystem />
+        <Process />
+        <Testimonials />
+        <Pricing />
+        <Faq />
+        <Contact onSent={() => setToast("Mensagem enviada! Responderemos em 24h.")} />
+      </main>
+      <SiteFooter />
+
+      {modal && (
+        <div className="overlay center" onClick={() => setModal(false)}>
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="mt" onClick={(e) => e.stopPropagation()}>
+            <p className="mono kicker">Modal</p>
+            <h3 id="mt" className="display" style={{ fontSize: 44, margin: "10px 0" }}>Uma janela sobreposta.</h3>
+            <p style={{ color: "var(--muted-foreground)", lineHeight: 1.6 }}>O modal interrompe o fluxo para pedir atenção. Use com moderação. Feche com o botão, clicando fora ou pela tecla Esc.</p>
+            <button className="btn btn-primary" onClick={() => setModal(false)} autoFocus>Entendi</button>
+          </div>
         </div>
-        <div className="hero__scroll" data-scroll data-depth="0.1"><span>ROLE PARA EXPLORAR</span><i /></div>
-      </section>
-
-      <section className="page-section service-section" id="banho" aria-label="Banho e tosa">
-        <div className="section-heading" data-scroll-group><span className="eyebrow" data-scroll>01 / BANHO & TOSA</span><span className="section-heading__index" data-scroll>[ B-01 ]</span></div>
-        <article className="service-card" data-scroll-group>
-          <div className="service-card__icon" data-scroll data-depth="0.12"><PawIcon /></div>
-          <div className="service-card__copy" data-scroll data-depth="0.07"><h2>Banho e tosa<br />com jeitinho.</h2><p>Água morninha, produtos suaves e aquele cafuné que não acaba.</p><button className="text-link" onClick={() => goTo("#contato")}>Conheça o cuidado <span>↗</span></button></div>
-          <div className="dog-orbit" data-scroll data-expression data-depth="0.19" aria-hidden="true"><DogIllustration /></div>
-        </article>
-        <div className="service-foot" data-scroll-group><span data-scroll>SEM PRESSA. SEM ESTRESSE.</span><span data-scroll>100% MAIS ABRAÇÁVEL →</span></div>
-      </section>
-
-      <section className="page-section clinic-section" id="clinica" aria-label="Clínica veterinária e day care">
-        <div className="section-heading" data-scroll-group><span className="eyebrow" data-scroll>02 / SAÚDE & BEM-ESTAR</span><span className="section-heading__index" data-scroll>[ B-02 ]</span></div>
-        <h2 className="section-title" data-scroll-group><span data-scroll>Um cuidado</span><span data-scroll>que <em className="accent">sente junto.</em></span></h2>
-        <div className="clinic-grid" data-scroll-group>
-          <article className="mini-card" data-scroll data-scroll-effect="folder" data-depth="0.06"><div className="mini-card__symbol">✳</div><span>01 — VET</span><h3>Clínica<br />de confiança</h3><p>Consultas com calma. Porque ouvir também faz parte de cuidar.</p></article>
-          <article className="mini-card mini-card--accent" data-scroll data-scroll-effect="folder" data-depth="0.15"><div className="mini-card__symbol">⌁</div><span>02 — DAY CARE</span><h3>Dia cheio<br />de amigos</h3><p>Brincadeira, descanso e companhia na medida certa.</p></article>
-        </div>
-        <div className="clinic-note" data-scroll data-depth="0.08"><PawIcon /><span>Pequenos focinhos. Grandes histórias.</span></div>
-      </section>
-
-      <section className="page-section story-section" id="historia" aria-label="A história da Bicho">
-        <div className="section-heading" data-scroll-group><span className="eyebrow" data-scroll>03 / NOSSA HISTÓRIA</span><span className="section-heading__index" data-scroll>[ DESDE 2011 ]</span></div>
-        <div className="story-section__main" data-scroll-group><p className="eyebrow" data-scroll>UM MONTE DE AMOR EM</p><div className="big-number" data-scroll data-depth="0.12"><span ref={years}>00</span><b>ANOS</b></div><h2 data-scroll>de rabinhos<br />abanando.</h2></div>
-        <p className="story-section__note" data-scroll data-depth="0.07">Desde o primeiro banho, a gente acredita que todo pet merece se sentir em casa. E todo tutor merece saber que ele está em boas patas.</p>
-        <div className="star-stamp" data-scroll data-depth="0.21">FEITO<br />COM<br /><span>AMOR</span></div>
-      </section>
-
-      <section className="page-section partner-section" id="parceiros" aria-label="Parceiros da Bicho">
-        <div className="section-heading" data-scroll-group><span className="eyebrow" data-scroll>04 / NOSSA TURMA</span><span className="section-heading__index" data-scroll>[ BONS DE PATAS ]</span></div>
-        <h2 className="section-title" data-scroll-group><span data-scroll>Juntos, a gente</span><span data-scroll>cuida <em className="accent">melhor.</em></span></h2>
-        <div className="partner-grid" data-scroll-group>
-          <div className="partner-mark partner-mark--one" data-scroll data-depth="0.05"><PawIcon /><span>petzito</span></div>
-          <div className="partner-mark partner-mark--two" data-scroll data-depth="0.11"><span className="partner-mark__sun">✳</span><span>VET<span className="accent">+</span></span></div>
-          <div className="partner-mark partner-mark--three" data-scroll data-depth="0.16"><span>mimo<span className="accent">.</span></span></div>
-          <div className="partner-mark partner-mark--four" data-scroll data-depth="0.23"><PawIcon /><span>AU! CLUB</span></div>
-        </div>
-        <p className="partner-note" data-scroll>Marcas que amam os bichos tanto quanto a gente.</p>
-      </section>
-
-      <section className="page-section contact-section" id="contato" aria-label="Contato e novidades">
-        <div className="section-heading" data-scroll-group><span className="eyebrow" data-scroll>05 / VEM PRA BICHO</span><span className="section-heading__index" data-scroll>[ OLÁ, AMIGO! ]</span></div>
-        <div className="contact-section__content" data-scroll-group><p className="eyebrow" data-scroll>O PRÓXIMO ABRAÇO</p><h2 data-scroll>começa<br />por aqui<span className="accent">.</span></h2><p data-scroll>Deixe seu e-mail e a gente te conta as novidades, dicas e mimos da Bicho.</p>
-          <form className="contact-form" onSubmit={subscribe} data-scroll><label className="sr-only" htmlFor="pet-email">Seu e-mail</label><input id="pet-email" type="email" placeholder="seu melhor e-mail" required /><button type="submit">{subscribed ? "Combinado! ✓" : "Quero novidades ↗"}</button></form>
-          <p className="contact-legal" data-scroll>{subscribed ? "Oba! Seu lugar na nossa turma está guardado." : "Sem spam. Só coisas boas para você e seu pet."}</p>
-        </div>
-        <footer className="site-footer" data-scroll-group data-scroll><span data-scroll>bicho<span className="accent">.</span> <small>© 2026 — FEITO COM AMOR E PATAS.</small></span><span className="footer-social" data-scroll>IG &nbsp; TT &nbsp; WA ↗</span></footer>
-      </section>
-      <div className="cursor-glow" aria-hidden="true" />
-    </main>
+      )}
+      {toast && <div className="toast" role="status"><span>✓</span>{toast}</div>}
+    </>
   );
 }
 
-function PawLogo() {
-  return <svg className="paw-logo" viewBox="0 0 32 32" fill="none" aria-hidden="true"><ellipse cx="16" cy="20" rx="8" ry="6" fill="currentColor" /><ellipse cx="7.7" cy="12" rx="3" ry="4" transform="rotate(-26 7.7 12)" fill="currentColor" /><ellipse cx="14.3" cy="7.2" rx="3" ry="4" transform="rotate(-8 14.3 7.2)" fill="currentColor" /><ellipse cx="21.4" cy="8" rx="3" ry="4" transform="rotate(12 21.4 8)" fill="currentColor" /><ellipse cx="26" cy="13.2" rx="3" ry="4" transform="rotate(28 26 13.2)" fill="currentColor" /></svg>;
+function DesignSystem() {
+  const tabs = ["Tipografia", "Cor", "Espaçamento", "Laboratório"] as const;
+  const [tab, setTab] = useState<(typeof tabs)[number]>("Tipografia");
+  const [tracking, setTracking] = useState(-2);
+  const [leading, setLeading] = useState(110);
+  const [size, setSize] = useState(56);
+  return (
+    <section className="sec" id="sistema">
+      <div className="wrap">
+        <div className="sec-head reveal">
+          <div><p className="mono kicker">[02] Design System</p><h2 className="display">Os tijolos de tudo.</h2></div>
+          <p>Um <b>design system</b> reúne tokens de cor, tipo e espaço. Navegue pelas <b>Tabs</b> abaixo.</p>
+        </div>
+        <div className="tabs" role="tablist" data-term="Tabs">
+          {tabs.map((t) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}>{t}</button>)}
+        </div>
+        <div className="panel" key={tab} role="tabpanel">
+          {tab === "Tipografia" && (
+            <div data-term="Escala Tipográfica">
+              {[["Display · Serif", 72, "var(--font-display)", "Fraunces"], ["H2 · Serif", 44, "var(--font-display)", "Hierarquia"], ["Body · Sans", 20, "var(--font-sans)", "Bricolage Grotesque — legível e amigável."], ["Label · Mono", 13, "var(--font-mono)", "JETBRAINS MONO 0123"]].map(([l, s, f, txt]) => (
+                <div className="type-row" key={String(l)}><span className="mono">{l} · {s}px</span><span style={{ fontSize: Number(s), fontFamily: String(f), lineHeight: 1.1, letterSpacing: Number(s) > 40 ? "-.03em" : 0 }}>{txt}</span></div>
+              ))}
+            </div>
+          )}
+          {tab === "Cor" && (
+            <div className="swatches" data-term="Paleta de Cores">
+              {[["Papel", "var(--background)", "Fundo"], ["Tinta", "var(--foreground)", "Texto · contraste AAA"], ["Sinal", "var(--primary)", "Accent / CTA"], ["Lima", "var(--accent)", "Destaque secundário"], ["Azul", "var(--blue)", "Foco e links"], ["Gradiente", "var(--gradient)", "Ênfase"]].map(([n, c, u]) => (
+                <div className="swatch" key={n}><div style={{ background: c }} /><p><b>{n}</b><br /><span className="mono" style={{ color: "var(--muted-foreground)" }}>{u}</span></p></div>
+              ))}
+            </div>
+          )}
+          {tab === "Espaçamento" && (
+            <div data-term="Grid de 8pt">
+              {[4, 8, 16, 24, 32, 48, 64, 96, 128].map((n) => <div className="space-row" key={n}><span className="mono" style={{ width: 70 }}>{n}px</span><i style={{ width: n * 3 }} /></div>)}
+            </div>
+          )}
+          {tab === "Laboratório" && (
+            <div className="lab">
+              <div>
+                <label className="mono">Tracking (espaço entre letras): {tracking / 100}em</label>
+                <input type="range" min={-8} max={20} value={tracking} onChange={(e) => setTracking(+e.target.value)} />
+                <label className="mono">Leading (altura de linha): {leading}%</label>
+                <input type="range" min={80} max={180} value={leading} onChange={(e) => setLeading(+e.target.value)} />
+                <label className="mono">Tamanho: {size}px</label>
+                <input type="range" min={20} max={96} value={size} onChange={(e) => setSize(+e.target.value)} />
+              </div>
+              <p className="display" style={{ fontSize: size, letterSpacing: `${tracking / 100}em`, lineHeight: leading / 100, margin: 0 }} data-term="Kerning · Tracking · Leading">Bom design é invisível.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
 }
 
-function PawIcon() {
-  return <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><ellipse cx="16" cy="20" rx="8" ry="6" fill="currentColor" /><ellipse cx="7.5" cy="12" rx="3" ry="4" transform="rotate(-28 7.5 12)" fill="currentColor" /><ellipse cx="14" cy="7" rx="3" ry="4" transform="rotate(-8 14 7)" fill="currentColor" /><ellipse cx="21" cy="8" rx="3" ry="4" transform="rotate(12 21 8)" fill="currentColor" /><ellipse cx="26" cy="13" rx="3" ry="4" transform="rotate(28 26 13)" fill="currentColor" /></svg>;
+function Process() {
+  const steps = [
+    ["Wireframe", "O esqueleto: blocos tracejados definem onde cada coisa vai, sem cor nem estilo."],
+    ["Mockup", "Alta fidelidade: entram cores, tipografia e imagens. É o visual final, ainda estático."],
+    ["Protótipo", "Tudo ganha vida: cliques, transições e fluxo real para testar com pessoas."],
+  ];
+  const [active, setActive] = useState(0);
+  const refs = useRef<(HTMLDivElement | null)[]>([]);
+  useEffect(() => {
+    const io = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && setActive(Number((e.target as HTMLElement).dataset.i))), { rootMargin: "-45% 0px -45% 0px" });
+    refs.current.forEach((r) => r && io.observe(r));
+    return () => io.disconnect();
+  }, []);
+  return (
+    <section className="sec" id="processo">
+      <div className="wrap">
+        <div className="sec-head reveal"><div><p className="mono kicker">[03] Scrollytelling</p><h2 className="display">Do rascunho ao real.</h2></div><p>Role devagar: o quadro à esquerda evolui conforme a história avança.</p></div>
+        <div className="story" data-term="Scrollytelling">
+          <div className="story-sticky">
+            <div className={`frame s${active}`}><div /><div className="f-hero" /><div className="f-cta" /></div>
+          </div>
+          <div className="story-steps">
+            {steps.map(([t, d], i) => (
+              <div key={t} data-i={i} ref={(el) => { refs.current[i] = el; }} className={active === i ? "is-active" : ""}>
+                <span className="mono kicker">Etapa 0{i + 1}</span><h3>{t}</h3><p>{d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
-function DogIllustration() {
-  return <svg className="dog-illustration" viewBox="0 0 220 220" fill="none" aria-hidden="true">
-    <circle cx="110" cy="110" r="100" fill="#F25A43" />
-    <path d="M57 86 41 44c-2-6 4-11 10-8l37 22m75 28 16-42c2-6-4-11-10-8l-37 22" fill="#F6D983" stroke="#15161A" strokeWidth="5" strokeLinejoin="round" />
-    <path d="M55 104c0-34 25-58 55-58s55 24 55 58v43c0 28-23 50-55 50s-55-22-55-50v-43Z" fill="#F2D8B5" stroke="#15161A" strokeWidth="5" />
-    <g className="dog-eyes">
-      <ellipse cx="91" cy="124" rx="6" ry="5" fill="#15161A" />
-      <ellipse cx="143" cy="124" rx="6" ry="5" fill="#15161A" />
-      <circle cx="93" cy="122" r="1.7" fill="#fff" />
-      <circle cx="145" cy="122" r="1.7" fill="#fff" />
-    </g>
-    <ellipse cx="110" cy="143" rx="12" ry="9" fill="#15161A" />
-    <path className="dog-mouth" d="M98 151q12 7 24 0 5 4 3 13-4 15-15 15t-15-15q-2-9 3-13Z" fill="#32191C" stroke="#15161A" strokeWidth="3" strokeLinejoin="round" />
-    <path className="dog-tongue" d="M102 163q8 5 16 0 0 12-8 12t-8-12Z" fill="#F46F74" />
-    <path d="M65 154c-13-3-20 2-23 9m113-9c13-3 20 2 23 9" stroke="#15161A" strokeWidth="4" strokeLinecap="round" />
-  </svg>;
+function Testimonials() {
+  const items = [
+    ["“Entendi em uma tarde o que levei anos tentando aprender sozinha.”", "Marina Lopes — Designer Júnior"],
+    ["“O modo Raio-X é genial. Virou referência no meu time.”", "Rafael Costa — Head de Produto"],
+    ["“Profissional, bonito e didático. Raro ver os três juntos.”", "Júlia Andrade — Diretora de Arte"],
+  ];
+  const [i, setI] = useState(0);
+  useEffect(() => { const t = setInterval(() => setI((x) => (x + 1) % items.length), 5000); return () => clearInterval(t); }, [items.length]);
+  return (
+    <section className="sec" id="depoimentos" data-term="Social Proof">
+      <div className="wrap">
+        <p className="mono kicker reveal">[04] Depoimentos</p>
+        <div className="carousel reveal" data-term="Carousel" style={{ margin: "30px 0" }}>
+          <div className="carousel-track" style={{ transform: `translateX(-${i * 100}%)` }}>
+            {items.map(([q, a]) => <div className="slide" key={a}><blockquote>{q}</blockquote><p className="mono" style={{ marginTop: 24 }}>{a}</p></div>)}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+          <button className="icon-btn" onClick={() => setI((i - 1 + items.length) % items.length)} aria-label="Anterior">←</button>
+          <div className="dots">{items.map((_, k) => <button key={k} className={k === i ? "is-on" : ""} onClick={() => setI(k)} aria-label={`Slide ${k + 1}`} />)}</div>
+          <button className="icon-btn" onClick={() => setI((i + 1) % items.length)} aria-label="Próximo">→</button>
+        </div>
+        <div className="stats reveal">
+          <Counter to={240} label="projetos entregues" /><Counter to={98} label="% de clientes satisfeitos" suffix="%" /><Counter to={12} label="anos de estúdio" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Counter({ to, label, suffix = "+" }: { to: number; label: string; suffix?: string }) {
+  const [n, setN] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      const start = performance.now();
+      const step = (t: number) => { const p = Math.min(1, (t - start) / 1400); setN(Math.round(to * (1 - Math.pow(1 - p, 3)))); if (p < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [to]);
+  return <div ref={ref}><b>{n}{suffix}</b><span className="mono">{label}</span></div>;
+}
+
+function Pricing() {
+  const [yearly, setYearly] = useState(false);
+  const plans = [
+    { n: "Landing", p: 2900, f: ["1 página de conversão", "Design responsivo", "SEO básico"] },
+    { n: "Site completo", p: 6900, f: ["Até 8 páginas", "Design system próprio", "Animações e interações", "Suporte 60 dias"], pop: true },
+    { n: "Produto", p: 14900, f: ["UX research", "Protótipo navegável", "Testes com usuários", "Handoff para devs"] },
+  ];
+  return (
+    <section className="sec" id="precos">
+      <div className="wrap">
+        <div className="sec-head reveal">
+          <div><p className="mono kicker">[05] Pricing Table</p><h2 className="display">Planos claros.</h2></div>
+          <label style={{ display: "flex", alignItems: "center", gap: 12 }} data-term="Toggle Switch">
+            <span>Mensal</span>
+            <button className="switch" role="switch" aria-checked={yearly} onClick={() => setYearly(!yearly)} aria-label="Cobrança anual" />
+            <span>Anual <span className="badge mono">-20%</span></span>
+          </label>
+        </div>
+        <div className="prices" data-term="Pricing Table">
+          {plans.map((pl) => (
+            <article key={pl.n} className={`price reveal${pl.pop ? " is-pop" : ""}`}>
+              {pl.pop && <span className="badge mono" data-term="Badge">Mais escolhido</span>}
+              <p className="mono" style={{ margin: 0 }}>{pl.n}</p>
+              <div className="amt">R${Math.round((yearly ? pl.p * 0.8 : pl.p) / 100) / 10}k</div>
+              <ul>{pl.f.map((f) => <li key={f}>{f}</li>)}</ul>
+              <a href="#contato" className={`btn ${pl.pop ? "btn-primary" : "btn-ghost"}`} style={{ justifyContent: "center", marginTop: "auto" }}>Escolher</a>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Faq() {
+  const qs = [
+    ["O que é UI e o que é UX?", "UI (User Interface) é o visual: botões, cores, tipografia. UX (User Experience) é a sensação de usar: se é fácil, rápido e agradável. Um bom produto precisa dos dois."],
+    ["O que significa 'above the fold'?", "É tudo que aparece na tela antes de rolar. Por isso o hero precisa dizer quem você é e o que oferece em poucos segundos."],
+    ["Por que usar um grid?", "O grid cria alinhamento e ritmo. Mesmo layouts 'quebrados' partem de um grid para que a quebra pareça intencional."],
+    ["Quantas fontes devo usar?", "Em geral, duas ou três: uma de destaque (display), uma para leitura (body) e, opcionalmente, uma monoespaçada para detalhes."],
+  ];
+  const [open, setOpen] = useState(0);
+  return (
+    <section className="sec" id="faq">
+      <div className="wrap" style={{ maxWidth: 900 }}>
+        <p className="mono kicker reveal">[06] Accordion</p>
+        <h2 className="display reveal" style={{ fontSize: "clamp(40px,6vw,84px)", margin: "12px 0 40px" }}>Perguntas frequentes.</h2>
+        <div data-term="Accordion">
+          {qs.map(([q, a], i) => (
+            <div key={q} className={`acc-item${open === i ? " is-open" : ""}`}>
+              <button aria-expanded={open === i} onClick={() => setOpen(open === i ? -1 : i)}>{q}<span className="plus">+</span></button>
+              <div className="acc-body"><div><p>{a}</p></div></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Contact({ onSent }: { onSent: () => void }) {
+  const [v, setV] = useState({ nome: "", email: "", msg: "" });
+  const [touched, setTouched] = useState(false);
+  const errs = {
+    nome: v.nome.trim().length < 2 ? "Digite seu nome" : "",
+    email: /^\S+@\S+\.\S+$/.test(v.email) ? "" : "E-mail inválido",
+    msg: v.msg.trim().length < 10 ? "Conte um pouco mais (mín. 10 caracteres)" : "",
+  };
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    setTouched(true);
+    if (Object.values(errs).some(Boolean)) return;
+    onSent();
+    setV({ nome: "", email: "", msg: "" });
+    setTouched(false);
+  };
+  const cls = (k: keyof typeof errs) => `field${touched ? (errs[k] ? " is-err" : " is-ok") : ""}`;
+  return (
+    <section className="sec" id="contato">
+      <div className="wrap lab" style={{ alignItems: "start" }}>
+        <div className="reveal">
+          <p className="mono kicker">[07] Formulário</p>
+          <h2 className="display" style={{ fontSize: "clamp(48px,7vw,104px)", margin: "12px 0 20px" }}>Vamos criar algo?</h2>
+          <p style={{ color: "var(--muted-foreground)", lineHeight: 1.6, maxWidth: "40ch" }}>Repare nos <b>floating labels</b>, no <b>focus state</b> azul e na <b>validação</b> com feedback visual ao enviar.</p>
+        </div>
+        <form className="form reveal" onSubmit={submit} noValidate data-term="Validação de Formulário">
+          <div className={cls("nome")} data-term="Floating Label"><input id="nome" placeholder=" " value={v.nome} onChange={(e) => setV({ ...v, nome: e.target.value })} /><label htmlFor="nome">Seu nome</label>{touched && errs.nome && <span className="err">{errs.nome}</span>}</div>
+          <div className={cls("email")}><input id="email" type="email" placeholder=" " value={v.email} onChange={(e) => setV({ ...v, email: e.target.value })} /><label htmlFor="email">E-mail</label>{touched && errs.email && <span className="err">{errs.email}</span>}</div>
+          <div className={cls("msg")}><textarea id="msg" rows={4} placeholder=" " value={v.msg} onChange={(e) => setV({ ...v, msg: e.target.value })} /><label htmlFor="msg">Sobre o projeto</label>{touched && errs.msg && <span className="err">{errs.msg}</span>}</div>
+          <button className="btn btn-primary" type="submit" style={{ justifyContent: "center" }} onClick={rippleOn}>Enviar mensagem <span className="arr">→</span></button>
+        </form>
+      </div>
+    </section>
+  );
 }
