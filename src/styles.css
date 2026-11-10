@@ -126,7 +126,7 @@
 /* ===== X-RAY MODE: rotula elementos com o termo ===== */
 .xray [data-term] { outline: 1px dashed var(--blue); outline-offset: 4px; position: relative; }
 .xray [data-term]::before { content: attr(data-term); position: absolute; top: 8px; left: 8px; z-index: 60; max-width: calc(100% - 16px); padding: 4px 8px; border: 1px solid oklch(0.99 0.006 85 / .8); border-radius: 6px; background: oklch(0.38 0.15 255); color: oklch(0.99 0.006 85); box-shadow: 0 2px 8px oklch(0 0 0 / .35); font: 700 11px/1.45 var(--font-mono); letter-spacing: .035em; text-transform: uppercase; white-space: normal; overflow-wrap: anywhere; pointer-events: none; animation: pop .3s var(--ease); }
-.xray .hdr { overflow-x: clip; overflow-y: visible; }
+.xray .hdr { position: fixed; overflow-x: clip; overflow-y: visible; }
 .xray .hdr[data-term]::before { top: calc(100% + 8px); right: auto; left: 8px; width: max-content; max-width: min(220px, 60vw); animation: fade .2s ease-out; }
 .xray .hdr-actions [data-term]::before { top: calc(100% + 8px); left: auto; right: 0; width: max-content; max-width: min(180px, 45vw); animation: fade .2s ease-out; }
 .xray .hdr-actions .burger[data-term]::before { top: calc(100% + 42px); }
