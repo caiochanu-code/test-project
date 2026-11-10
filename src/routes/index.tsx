@@ -27,6 +27,7 @@ function Index() {
   useReveal();
   const [duration, setDuration] = useState(850);
   const [curve, setCurve] = useState<(typeof curves)[number]["value"]>(curves[0].value);
+  const [transitionActive, setTransitionActive] = useState(false);
   const [keyframePlay, setKeyframePlay] = useState(0);
   const [staggerPlay, setStaggerPlay] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -107,7 +108,7 @@ function Index() {
 
             <article className="motion-demo reveal" data-term="Transition · Duration · Easing">
               <div className="motion-demo-copy"><span className="mono kicker">01 / TRANSITION</span><h3>Um estado encontra o outro.</h3><p><b>Transition</b> interpola uma mudança de estado. <b>Duration</b> define quanto tempo leva; <b>easing</b> distribui a velocidade durante o percurso.</p><label className="motion-control">Duração <output>{(duration / 1000).toFixed(2)}s</output><input aria-label="Duração da transição" type="range" min="250" max="1600" step="50" value={duration} onChange={(e) => setDuration(+e.target.value)} /></label><div className="curve-picks" aria-label="Curva de easing">{curves.map((c) => <button key={c.name} className={curve === c.value ? "is-selected" : ""} onClick={() => setCurve(c.value)} aria-pressed={curve === c.value}>{c.name}</button>)}</div><small className="motion-note">{curves.find((c) => c.value === curve)?.note}</small></div>
-              <div className="transition-stage" style={{ "--demo-duration": `${duration}ms`, "--demo-ease": curve } as CSSProperties}><button className="transition-orb" aria-label="Passe o cursor ou foque para executar a transição">Passe ou foque</button><span className="mono">HOVER / FOCUS</span></div>
+              <div className="transition-stage" style={{ "--demo-duration": `${duration}ms`, "--demo-ease": curve } as CSSProperties}><button className={`transition-orb${transitionActive ? " is-active" : ""}`} aria-label="Passe o cursor ou foque para executar a transição" aria-pressed={transitionActive} onClick={() => { if (matchMedia("(pointer: coarse)").matches) setTransitionActive((active) => !active); }}>Passe ou foque</button><span className="mono">HOVER / FOCUS</span></div>
             </article>
 
             <div className="motion-pair">
