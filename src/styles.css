@@ -357,7 +357,7 @@
   .footer-cols { grid-template-columns: 1fr 1fr; }
 }
 @media (pointer: coarse) {
-  .transition-orb { width: 214px; height: 214px; padding: 36px; background-clip: content-box; }
+  .transition-orb { width: 142px; height: 142px; padding: 0; background-clip: border-box; }
 }
 @media (prefers-reduced-motion: reduce) and (max-width: 760px) {
   .cursor-follower { display: none; }
