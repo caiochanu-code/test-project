@@ -99,7 +99,7 @@ function Index() {
           </div>
         </section>
 
-        <div className="marquee" id="marquee" data-term="Marquee"><div className="marquee-track">{[0, 1].map((k) => ["Transition", "Keyframes", "Stagger", "Scroll Reveal", "Easing", "Parallax", "Scroll-linked", "Microinteração"].map((w) => <span key={`${k}-${w}`}>{w}</span>))}</div></div>
+        <div className="marquee" id="marquee" data-term="Marquee"><div className="marquee-track">{[0, 1].map((k) => <div className="marquee-group" key={k}>{["Transition", "Keyframes", "Stagger", "Scroll Reveal", "Easing", "Parallax", "Scroll-linked", "Microinteração"].map((w) => <span key={`${k}-${w}`}>{w}</span>)}</div>)}</div></div>
 
         <section className="sec" id="animacoes">
           <div className="wrap">
