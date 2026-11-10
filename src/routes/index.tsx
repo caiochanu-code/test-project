@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { ConceptLab } from "@/components/ConceptLab";
 import { useReveal } from "@/lib/use-reveal";
 
 export const Route = createFileRoute("/")({
@@ -144,6 +145,7 @@ function Index() {
 
         <DesignSystem />
         <Process />
+        <ConceptLab />
         <Faq />
       </main>
       <SiteFooter />

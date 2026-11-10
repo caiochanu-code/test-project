@@ -425,3 +425,82 @@
   .scrub-sun { left: 46%; top: 40%; }
   .scrub-marker { left: 50%; }
 }
+
+/* ===== CONCEITOS EM DEMONSTRAÇÃO ===== */
+.concept-group { margin-top: 54px; }
+.concept-group > h3 { margin: 0 0 18px; font: 500 clamp(24px, 3vw, 34px)/1.1 var(--font-display); letter-spacing: -.03em; }
+.concept-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.concept-card { min-width: 0; padding: 22px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.concept-card h3 { margin: 0; font: 500 24px/1.1 var(--font-display); letter-spacing: -.03em; }
+.concept-card p { margin: 0; color: var(--muted-foreground); font-size: 14px; line-height: 1.5; }
+.concept-preview, .pricing-preview, .search-preview, .social-preview { width: 100%; padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--background); display: grid; gap: 8px; }
+.concept-preview > span, .pricing-preview > span, .concept-note { color: var(--muted-foreground); font-size: 12px; line-height: 1.45; }
+.concept-button, .concept-select, .concept-field input, .concept-field textarea, .concept-form input { min-height: 40px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--background); color: var(--foreground); font: 500 14px/1.2 var(--font-sans); }
+.concept-button { cursor: pointer; transition: background .2s, color .2s, border-color .2s, transform .2s; }
+.concept-button:hover { background: var(--foreground); color: var(--background); transform: translateY(-1px); }
+.concept-button[aria-pressed="true"] { background: var(--foreground); color: var(--background); }
+.concept-button:disabled { opacity: .55; cursor: wait; }
+.concept-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.concept-range, .concept-field { width: 100%; display: grid; gap: 7px; color: var(--muted-foreground); font: 11px/1.4 var(--font-mono); text-transform: uppercase; }
+.concept-range input { width: 100%; accent-color: var(--primary); }
+.concept-field input, .concept-field textarea { width: 100%; font: 14px/1.4 var(--font-sans); text-transform: none; resize: vertical; }
+.landing-preview { background: linear-gradient(135deg, color-mix(in oklab, var(--primary) 16%, var(--surface)), var(--surface)); }
+.landing-preview > b { font: 500 24px/1 var(--font-display); }
+.landing-preview > span { color: var(--muted-foreground); font-size: 13px; }
+.responsive-preview, .container-demo, .viewport-frame { max-width: 100%; padding: 14px; border: 1px solid var(--primary); border-radius: 12px; background: color-mix(in oklab, var(--primary) 7%, var(--surface)); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; transition: width .2s, max-width .2s; }
+.breakpoint-preview, .mobile-first-preview { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.breakpoint-preview span, .mobile-first-preview span { padding: 12px 8px; border-radius: 10px; background: var(--muted); text-align: center; font-size: 12px; }
+.breakpoint-preview.is-narrow, .mobile-first-preview:not(.is-wide) { grid-template-columns: minmax(0, 1fr); }
+.reading-preview { width: 100%; height: 112px; position: relative; border: 1px solid var(--border); border-radius: 12px; background: repeating-linear-gradient(0deg, transparent 0 24px, var(--muted) 24px 26px); }
+.reading-preview i { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 5px color-mix(in oklab, var(--primary) 16%, transparent); }
+.pattern-z i:nth-child(1) { top: 12px; left: 12px; } .pattern-z i:nth-child(2) { top: 12px; right: 12px; } .pattern-z i:nth-child(3) { bottom: 12px; left: 12px; } .pattern-z i:nth-child(4) { bottom: 12px; right: 12px; }
+.pattern-f i:nth-child(1) { top: 12px; left: 12px; } .pattern-f i:nth-child(2) { top: 12px; right: 12px; } .pattern-f i:nth-child(3) { top: 48px; left: 12px; } .pattern-f i:nth-child(4) { top: 48px; left: 50%; }
+.iteration-stage { width: 100%; height: 54px; display: grid; place-items: center; border-radius: 12px; background: var(--muted); }
+.iteration-stage i { width: 24px; height: 24px; border-radius: 50%; background: var(--primary); animation: iteration-demo 650ms ease-in-out var(--iteration-count, 3); }
+.smooth-preview { width: 100%; max-height: 110px; overflow: auto; display: grid; gap: 28px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--background); font-size: 12px; }
+.smooth-preview b { padding: 12px; border-radius: 8px; background: var(--accent); }
+.carousel-preview { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.concept-modal-backdrop { position: fixed; inset: 0; z-index: 110; display: grid; place-items: center; padding: 20px; background: oklch(0.15 0.02 255 / .55); }
+.concept-modal { width: min(420px, 100%); position: relative; padding: 28px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); }
+.concept-modal h4 { margin: 0 30px 10px 0; font: 500 28px/1.1 var(--font-display); }
+.concept-modal p { margin: 0 0 20px; color: var(--muted-foreground); }
+.concept-modal-close { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 50%; background: var(--background); font-size: 22px; }
+.concept-toast { position: fixed; right: 20px; bottom: 20px; z-index: 105; max-width: min(360px, calc(100vw - 40px)); padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--foreground); color: var(--background); box-shadow: var(--shadow); animation: fade .2s ease-out; }
+.concept-switch { display: inline-flex; align-items: center; gap: 10px; padding: 7px 12px 7px 7px; border: 1px solid var(--border); border-radius: 99px; background: var(--muted); color: var(--foreground); cursor: pointer; }
+.concept-switch i { width: 24px; height: 24px; border-radius: 50%; background: var(--surface); box-shadow: var(--shadow); transition: transform .2s, background .2s; }
+.concept-switch.is-on { background: var(--primary); color: var(--primary-foreground); }
+.concept-switch.is-on i { transform: translateX(18px); }
+.concept-badge { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 99px; font: 600 11px/1.2 var(--font-mono); }
+.badge-neutral { background: var(--muted); } .badge-warning { background: color-mix(in oklab, var(--orange) 25%, var(--surface)); } .badge-success { background: color-mix(in oklab, var(--accent) 30%, var(--surface)); }
+.pricing-preview strong { font: 500 24px/1.1 var(--font-display); }
+.floating-field { width: 100%; min-height: 58px; position: relative; display: flex; align-items: end; padding: 19px 12px 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--background); }
+.floating-field span { position: absolute; top: 50%; left: 12px; color: var(--muted-foreground); transform: translateY(-50%); transition: top .15s, transform .15s, font-size .15s; pointer-events: none; }
+.floating-field.is-raised span { top: 5px; transform: none; font-size: 10px; }
+.floating-field input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; }
+.ui-preview { width: 100%; display: grid; gap: 7px; }
+.ui-preview i { height: 22px; border-radius: 7px; background: var(--muted); }
+.ui-preview.view-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ui-preview.view-grid i { height: 52px; }
+.affordance-button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font-weight: 700; box-shadow: 0 4px 0 color-mix(in oklab, var(--primary) 65%, var(--foreground)); cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.affordance-button:hover { transform: translateY(2px); box-shadow: 0 2px 0 color-mix(in oklab, var(--primary) 65%, var(--foreground)); }
+.concept-form { width: 100%; display: grid; gap: 8px; }
+.concept-form label { color: var(--muted-foreground); font-size: 12px; }
+.concept-form input[aria-invalid="true"] { border-color: #d44; }
+.concept-form small { min-height: 18px; color: var(--muted-foreground); font-size: 12px; }
+.a11y-preview { width: 100%; height: 46px; display: grid; place-items: center; overflow: hidden; border-radius: 12px; background: var(--muted); }
+.a11y-preview i { width: 22px; height: 22px; border-radius: 50%; background: var(--primary); animation: float-orb 1s ease-in-out infinite alternate; }
+.a11y-preview.is-reduced i { animation: none; }
+.search-preview b { color: #1a0dab; } .search-preview span { color: #168039; font: 12px var(--font-mono); } .search-preview p { color: var(--muted-foreground); font-size: 12px; }
+.social-preview { border-top: 3px solid var(--primary); }
+.browser-tab { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px 10px 0 0; background: var(--background); }
+.browser-tab span { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 5px; background: var(--primary); color: var(--primary-foreground); font-size: 12px; }
+.browser-tab i { margin-left: auto; font-style: normal; }
+.lazy-preview { width: 100%; height: auto; display: block; border-radius: 12px; }
+.lazy-placeholder { width: 100%; padding: 22px 10px; border: 1px dashed var(--border); border-radius: 12px; color: var(--muted-foreground); text-align: center; font-size: 12px; }
+.viewport-frame { min-height: 72px; position: relative; justify-content: center; overflow: hidden; border-style: dashed; }
+.viewport-frame i { position: absolute; right: 12px; width: 18px; height: 18px; border-radius: 50%; background: var(--primary); }
+.performance-preview { width: 100%; min-height: 44px; display: flex; flex-wrap: wrap; gap: 5px; }
+.performance-preview i { width: 16px; height: 16px; border-radius: 4px; background: var(--accent); animation: fade .2s ease-out; }
+@keyframes iteration-demo { 0%, 100% { transform: scale(.65); opacity: .5; } 50% { transform: scale(1.25); opacity: 1; } }
+@media (max-width: 980px) { .concept-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .concept-grid { grid-template-columns: minmax(0, 1fr); } .concept-card { padding: 18px; } .concept-group { margin-top: 38px; } }
