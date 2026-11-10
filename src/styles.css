@@ -240,7 +240,8 @@
 .to-top.is-hidden { opacity: 0; transform: translateY(20px); pointer-events: none; }
 
 /* ===== REVEAL ===== */
-.reveal { opacity: 0; transform: translateY(40px); transition: opacity .9s var(--ease), transform .9s var(--ease); }
+.reveal { opacity: 1; transform: none; }
+.motion-ready .reveal { opacity: 0; transform: translateY(40px); transition: opacity .9s var(--ease), transform .9s var(--ease); will-change: opacity, transform; }
 .reveal.is-in { opacity: 1; transform: none; }
 
 /* ===== GLOSSÁRIO ===== */
@@ -268,7 +269,7 @@
 @keyframes pop { 0% { transform: scale(.85); opacity: 0; } 60% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
 @keyframes fade { from { opacity: 0; } }
 
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } html { scroll-behavior: auto; } }
+@media (prefers-reduced-motion: reduce) and (max-width: 760px) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } html { scroll-behavior: auto; } }
 
 /* ===== MOTION LAB: exemplos controláveis e vinculados à rolagem ===== */
 .hero .motion-orb { will-change: transform; animation: float-orb 7s ease-in-out infinite alternate; }
@@ -354,7 +355,7 @@
   .transition-orb:hover, .transition-orb:focus-visible { transform: translateX(35px) rotate(22deg) scale(.82); }
   .footer-cols { grid-template-columns: 1fr 1fr; }
 }
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) and (max-width: 760px) {
   .cursor-follower { display: none; }
   .hero .motion-orb { animation: none; }
   .reveal-step { animation: none; }

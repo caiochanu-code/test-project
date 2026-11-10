@@ -87,7 +87,7 @@ export function SiteHeader() {
 
 function CursorFollower() {
   useEffect(() => {
-    if (matchMedia("(pointer: coarse)").matches || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (matchMedia("(pointer: coarse)").matches) return;
     const cursor = document.createElement("div");
     cursor.className = "cursor-follower";
     cursor.setAttribute("aria-hidden", "true");

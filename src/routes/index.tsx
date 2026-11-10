@@ -48,15 +48,17 @@ function Index() {
         el.style.setProperty("--scrub-y", `${64 - progress * 38}%`);
       });
     };
+    const onVisible = () => { if (document.visibilityState === "visible") update(); };
     update();
     addEventListener("scroll", update, { passive: true });
     addEventListener("resize", update);
-    return () => { cancelAnimationFrame(frame); removeEventListener("scroll", update); removeEventListener("resize", update); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { cancelAnimationFrame(frame); removeEventListener("scroll", update); removeEventListener("resize", update); document.removeEventListener("visibilitychange", onVisible); };
   }, []);
 
   useEffect(() => {
     const el = parallaxRef.current;
-    if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!el) return;
     let frame = 0;
     const update = () => {
       cancelAnimationFrame(frame);
@@ -69,10 +71,12 @@ function Index() {
         el.style.setProperty("--para-front-y", `${(p - 0.5) * -18}px`);
       });
     };
+    const onVisible = () => { if (document.visibilityState === "visible") update(); };
     update();
     addEventListener("scroll", update, { passive: true });
     addEventListener("resize", update);
-    return () => { cancelAnimationFrame(frame); removeEventListener("scroll", update); removeEventListener("resize", update); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { cancelAnimationFrame(frame); removeEventListener("scroll", update); removeEventListener("resize", update); document.removeEventListener("visibilitychange", onVisible); };
   }, []);
 
   return (
