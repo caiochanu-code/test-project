@@ -3,10 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { terms } from "@/lib/terms";
 
 const nav = [
-  ["01", "Sistema", "#sistema"],
-  ["02", "Processo", "#processo"],
-  ["03", "Planos", "#precos"],
-  ["04", "Contato", "#contato"],
+  ["01", "Animações", "#animacoes"],
+  ["02", "Interações", "#bento"],
+  ["03", "Sistema", "#sistema"],
+  ["04", "Processo", "#processo"],
 ] as const;
 
 export function SiteHeader() {
@@ -48,6 +48,7 @@ export function SiteHeader() {
 
   return (
     <>
+      <CursorFollower />
       <header className={`hdr${compact ? " is-compact" : ""}`} id="topo" data-term="Sticky Header">
         <Link to="/" className="hdr-brand" aria-label="Anatomia, início">
           <span className="hdr-logo">A/</span>
@@ -82,6 +83,37 @@ export function SiteHeader() {
       {palette && <Palette onClose={() => setPalette(false)} />}
     </>
   );
+}
+
+function CursorFollower() {
+  useEffect(() => {
+    if (matchMedia("(pointer: coarse)").matches || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const cursor = document.createElement("div");
+    cursor.className = "cursor-follower";
+    cursor.setAttribute("aria-hidden", "true");
+    cursor.innerHTML = "<i></i><b></b>";
+    document.body.appendChild(cursor);
+    let frame = 0;
+    const move = (event: PointerEvent) => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        cursor.style.setProperty("--cursor-x", `${event.clientX}px`);
+        cursor.style.setProperty("--cursor-y", `${event.clientY}px`);
+        cursor.classList.add("is-visible");
+      });
+    };
+    const hover = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest("a, button, input, textarea, [role=button]")) cursor.classList.add("is-hovering");
+      else cursor.classList.remove("is-hovering");
+    };
+    const leave = (event: PointerEvent) => { if (!event.relatedTarget) cursor.classList.remove("is-visible"); };
+    addEventListener("pointermove", move, { passive: true });
+    addEventListener("pointerover", hover, { passive: true });
+    addEventListener("pointerout", leave);
+    return () => { cancelAnimationFrame(frame); removeEventListener("pointermove", move); removeEventListener("pointerover", hover); removeEventListener("pointerout", leave); cursor.remove(); };
+  }, []);
+  return null;
 }
 
 function Palette({ onClose }: { onClose: () => void }) {
