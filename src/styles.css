@@ -412,10 +412,9 @@
   .para-front { left: 68%; }
 }
 @media (pointer: coarse) {
-  .transition-orb { position: relative; isolation: isolate; width: 142px; height: 142px; padding: 0; border-radius: 0; background: transparent; transform: none; filter: none; }
-  .transition-orb::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%; background: var(--gradient); transition: transform var(--demo-duration, 850ms) var(--demo-ease, ease), border-radius var(--demo-duration, 850ms) var(--demo-ease, ease), filter var(--demo-duration, 850ms) var(--demo-ease, ease); pointer-events: none; }
-  .transition-orb:hover, .transition-orb:focus-visible { transform: none; border-radius: 0; filter: none; }
-  .transition-orb.is-active::before { transform: rotate(22deg) scale(.82); border-radius: 28%; filter: hue-rotate(58deg); }
+  .transition-orb { width: 142px; height: 142px; padding: 0; background-clip: border-box; }
+  .transition-orb:hover, .transition-orb:focus-visible { transform: none; border-radius: 50%; filter: none; }
+  .transition-orb.is-active { transform: translateX(clamp(35px, 7vw, 70px)) rotate(22deg) scale(.82); border-radius: 28%; filter: hue-rotate(58deg); }
 }
 @media (prefers-reduced-motion: reduce) and (max-width: 760px) {
   .cursor-follower { display: none; }
