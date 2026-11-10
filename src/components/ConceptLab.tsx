@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 
 type ConceptDemoProps = { id: string; index: string; term: string; description: string; children: ReactNode };
-const carouselSlides = [{ title: "Estrutura", body: "Organize o conteúdo." }, { title: "Tipografia", body: "Dê ritmo à leitura." }, { title: "Interação", body: "Mostre a resposta da interface." }];
+const carouselSlides = ["Estrutura", "Tipografia", "Interação"];
 
 function ConceptDemo({ id, index, term, description, children }: ConceptDemoProps) {
   return (
@@ -75,12 +75,24 @@ function ContainerDemo() {
 function ReadingPatternDemo() {
   const [pattern, setPattern] = useState<"Z" | "F">("Z");
   const [step, setStep] = useState(0);
-  const steps = pattern === "Z" ? ["Topo esquerdo", "Topo direito", "Base esquerda", "Chamada final"] : ["Título", "Linha superior", "Linha seguinte", "Conteúdo"];
+  const steps = pattern === "Z"
+    ? [
+        { title: "Comece pela ideia", body: "Uma mensagem principal abre o percurso no alto à esquerda." },
+        { title: "Encontre o contexto", body: "O olhar atravessa a linha superior e encontra o apoio à direita." },
+        { title: "Leia o desenvolvimento", body: "A rota cruza a página e segue pelo conteúdo à esquerda." },
+        { title: "Escolha o próximo passo", body: "A chamada encerra o percurso no canto inferior direito." },
+      ]
+    : [
+        { title: "Comece pelo título", body: "O primeiro ponto da rota fica no alto, alinhado à esquerda." },
+        { title: "Percorra a primeira linha", body: "Leia o início do texto e siga a linha para encontrar o contexto." },
+        { title: "Desça pelos subtítulos", body: "Os próximos pontos de atenção aparecem na margem esquerda." },
+        { title: "Continue pelo conteúdo", body: "Leia os trechos seguintes a partir da margem, em linhas mais curtas." },
+      ];
   const choose = (next: "Z" | "F") => { setPattern(next); setStep(0); };
-  return <ConceptDemo id="demo-reading-pattern" index="07" term="Z-pattern / F-pattern" description="Compare dois mapas visuais de leitura. Avance ponto a ponto para acompanhar a sequência sugerida.">
+  return <ConceptDemo id="demo-reading-pattern" index="07" term="Z-pattern / F-pattern" description="Compare a rota sugerida sobre trechos de texto visíveis. Escolha um trecho para definir o ponto de partida e avance pela leitura.">
     <div className="concept-toolbar"><button className="concept-action" aria-pressed={pattern === "Z"} onClick={() => choose("Z")}>Z-pattern</button><button className="concept-action" aria-pressed={pattern === "F"} onClick={() => choose("F")}>F-pattern</button></div>
-    <div className={`reading-preview pattern-${pattern.toLowerCase()}`}>{steps.map((label, index) => <button key={`${pattern}-${label}`} aria-label={label} aria-current={step === index ? "step" : undefined} className={step === index ? "is-active" : ""} onClick={() => setStep(index)}><span>{index + 1}</span></button>)}</div>
-    <div className="concept-toolbar"><span className="concept-note">Leitura sugerida: {steps[step]}</span><button className="concept-action" onClick={() => setStep((value) => (value + 1) % steps.length)}>Próximo ponto →</button></div>
+    <div className={`reading-preview pattern-${pattern.toLowerCase()}`}>{steps.map((item, index) => <button key={`${pattern}-${item.title}`} aria-label={`Definir início da rota: ${item.title}`} aria-current={step === index ? "step" : undefined} className={step === index ? "is-active" : ""} onClick={() => setStep(index)}><span className="reading-step-number">0{index + 1}</span><b>{item.title}</b><span>{item.body}</span></button>)}</div>
+    <div className="concept-toolbar"><span className="concept-note">Ponto de partida: {steps[step].title}</span><button className="concept-action" onClick={() => setStep((value) => (value + 1) % steps.length)}>Próximo trecho →</button></div>
   </ConceptDemo>;
 }
 
@@ -96,11 +108,12 @@ function AnimationIterationDemo() {
 
 function SmoothScrollDemo() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<Array<HTMLElement | null>>([]);
   const destinations = ["Introdução", "Exemplo", "Destino"];
-  const goTo = (index: number) => { const element = scrollRef.current; if (element) element.scrollTo({ top: index * 92, behavior: "smooth" }); };
-  return <ConceptDemo id="demo-smooth-scroll" index="09" term="Smooth Scroll" description="Use os atalhos para rolar uma área interna até cada destino com comportamento suave.">
-    <div className="concept-toolbar">{destinations.map((label, index) => <button className="concept-action" key={label} onClick={() => goTo(index)}>{label}</button>)}</div>
-    <div className="smooth-preview" ref={scrollRef}><section><span className="mono">01</span><b>Introdução</b><p>O conteúdo começa aqui.</p></section><section><span className="mono">02</span><b>Exemplo</b><p>A rolagem percorre o conteúdo.</p></section><section><span className="mono">03</span><b>Destino</b><p>O navegador chega ao ponto escolhido.</p></section></div>
+  const goTo = (index: number) => { const container = scrollRef.current; const destination = sectionRefs.current[index]; if (container && destination) container.scrollTo({ top: destination.offsetTop, behavior: "smooth" }); };
+  return <ConceptDemo id="demo-smooth-scroll" index="09" term="Smooth Scroll" description="Escolha um destino e observe a área de conteúdo percorrer suavemente os trechos intermediários até ele.">
+    <div className="concept-toolbar">{destinations.map((label, index) => <button className="concept-action" key={label} onClick={() => goTo(index)}>Rolar até {label}</button>)}</div>
+    <div className="smooth-preview" ref={scrollRef}><section ref={(element) => { sectionRefs.current[0] = element; }}><span className="mono">01 · INÍCIO</span><b>Introdução</b><p>A leitura começa neste trecho. Escolha um dos destinos acima para ver a rolagem suave.</p></section><section ref={(element) => { sectionRefs.current[1] = element; }}><span className="mono">02 · PERCURSO</span><b>Exemplo</b><p>Este conteúdo intermediário confirma que a área percorreu o caminho até o destino escolhido.</p></section><section ref={(element) => { sectionRefs.current[2] = element; }}><span className="mono">03 · DESTINO</span><b>Destino</b><p>Você chegou ao fim da demonstração. Volte ao início para repetir o movimento.</p></section></div>
   </ConceptDemo>;
 }
 
@@ -110,11 +123,15 @@ function CarouselDemo() {
   const startX = useRef<number | null>(null);
   const move = (delta: number) => setIndex((value) => (value + delta + carouselSlides.length) % carouselSlides.length);
   useEffect(() => { if (!auto) return; const timer = window.setInterval(() => setIndex((value) => (value + 1) % carouselSlides.length), 2800); return () => window.clearInterval(timer); }, [auto]);
-  return <ConceptDemo id="demo-carousel-slider" index="10" term="Carousel / Slider" description="Navegue por slides em sequência usando setas, marcadores, gesto horizontal ou reprodução automática.">
+  return <ConceptDemo id="demo-carousel-slider" index="10" term="Carousel / Slider" description="Navegue por três slides com conteúdo e composição próprios usando setas, marcadores, gesto horizontal ou reprodução automática.">
     <div className="carousel-window" onPointerDown={(event) => { startX.current = event.clientX; }} onPointerUp={(event) => { if (startX.current === null) return; const delta = event.clientX - startX.current; if (Math.abs(delta) > 35) move(delta < 0 ? 1 : -1); startX.current = null; }}>
-      <div className="carousel-track" style={{ transform: `translateX(-${index * 100}%)` }}>{carouselSlides.map((slide, position) => <section className="carousel-slide" key={slide.title} aria-hidden={position !== index}><span className="mono">0{position + 1} / 0{carouselSlides.length}</span><h4>{slide.title}</h4><p>{slide.body}</p></section>)}</div>
+      <div className="carousel-track" style={{ transform: `translateX(-${index * 100}%)` }}>
+        <section className="carousel-slide carousel-slide-layout" key="layout" aria-hidden={index !== 0}><span className="mono">01 / 03 · ESTRUTURA</span><h4>Organize antes de decorar.</h4><p>Uma hierarquia clara aproxima cada parte do conteúdo.</p><div className="carousel-layout-art" aria-hidden="true"><i /><i /><i /><i /></div></section>
+        <section className="carousel-slide carousel-slide-type" key="type" aria-hidden={index !== 1}><span className="mono">02 / 03 · TIPOGRAFIA</span><h4>Crie ritmo para a leitura.</h4><p>Título, texto e legenda ocupam níveis diferentes de atenção.</p><div className="carousel-type-art" aria-hidden="true"><b>Ag</b><span>Uma frase em destaque</span><i /></div></section>
+        <section className="carousel-slide carousel-slide-action" key="action" aria-hidden={index !== 2}><span className="mono">03 / 03 · INTERAÇÃO</span><h4>Convide para agir.</h4><p>Um controle visível deixa claro o próximo passo.</p><button className="carousel-slide-button" tabIndex={index === 2 ? 0 : -1} onClick={() => setIndex(0)}>Experimentar novamente ↗</button></section>
+      </div>
     </div>
-    <div className="concept-toolbar"><button className="concept-action" aria-label="Slide anterior" onClick={() => move(-1)}>← Anterior</button><div className="carousel-dots">{carouselSlides.map((slide, position) => <button key={slide.title} aria-label={`Ir para ${slide.title}`} aria-current={index === position ? "true" : undefined} onClick={() => setIndex(position)} />)}</div><button className="concept-action" aria-label="Próximo slide" onClick={() => move(1)}>Próximo →</button></div>
+    <div className="concept-toolbar"><button className="concept-action" aria-label="Slide anterior" onClick={() => move(-1)}>← Anterior</button><div className="carousel-dots">{carouselSlides.map((slide, position) => <button key={slide} aria-label={`Ir para ${slide}`} aria-current={index === position ? "true" : undefined} onClick={() => setIndex(position)} />)}</div><button className="concept-action" aria-label="Próximo slide" onClick={() => move(1)}>Próximo →</button></div>
     <button className="concept-action" aria-pressed={auto} onClick={() => setAuto((value) => !value)}>{auto ? "Pausar reprodução" : "Reproduzir automaticamente"}</button>
   </ConceptDemo>;
 }
